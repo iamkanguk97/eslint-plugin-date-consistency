@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Linter } from 'eslint';
 import Header from './components/Header';
 import OptionsPanel from './components/OptionsPanel';
 import EditorPane from './components/EditorPane';
 import ResultPanel from './components/ResultPanel';
 import ExampleButtons from './components/ExampleButtons';
-import { lint, type PluginOptions } from './utils/linter';
+import { lint, type PluginOptions, type LintMessage } from './utils/linter';
 import { buildShareUrl, getSharedState } from './utils/share';
 
 const DEFAULT_CODE = `import dayjs from 'dayjs';
@@ -25,16 +24,12 @@ export default function App() {
   const initial = loadInitialState();
   const [code, setCode] = useState(initial.code);
   const [options, setOptions] = useState<PluginOptions>(initial.options);
-  const [messages, setMessages] = useState<Linter.LintMessage[]>([]);
+  const [messages, setMessages] = useState<LintMessage[]>([]);
   const [activeLabel, setActiveLabel] = useState('');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    try {
-      setMessages(lint(code, options));
-    } catch {
-      setMessages([]);
-    }
+    setMessages(lint(code, options));
   }, [code, options]);
 
   const handleExampleSelect = useCallback(

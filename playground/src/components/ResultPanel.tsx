@@ -1,7 +1,7 @@
-import type { Linter } from 'eslint';
+import type { LintMessage } from '../utils/linter';
 
 interface Props {
-  messages: Linter.LintMessage[];
+  messages: LintMessage[];
 }
 
 export default function ResultPanel({ messages }: Props) {
@@ -22,9 +22,7 @@ export default function ResultPanel({ messages }: Props) {
         ) : (
           messages.map((msg, i) => (
             <div key={i} className="result-item">
-              <div className="result-location">
-                Line {msg.line}, Col {msg.column}
-              </div>
+              <div className="result-location">Line {msg.line}, Col {msg.column}</div>
               <div className="result-rule">{msg.ruleId}</div>
               <div className="result-message">{msg.message}</div>
             </div>

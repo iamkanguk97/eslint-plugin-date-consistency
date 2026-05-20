@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import Editor, { type Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import type { Linter } from 'eslint';
+import type { LintMessage } from '../utils/linter';
 
 interface Props {
   code: string;
   onChange: (code: string) => void;
-  messages: Linter.LintMessage[];
+  messages: LintMessage[];
 }
 
 export default function EditorPane({ code, onChange, messages }: Props) {
@@ -47,12 +47,8 @@ export default function EditorPane({ code, onChange, messages }: Props) {
           wordWrap: 'on',
           tabSize: 2,
         }}
-        beforeMount={(monaco) => {
-          monacoRef.current = monaco;
-        }}
-        onMount={(editor) => {
-          editorRef.current = editor;
-        }}
+        beforeMount={(monaco) => { monacoRef.current = monaco; }}
+        onMount={(editor) => { editorRef.current = editor; }}
       />
     </div>
   );
