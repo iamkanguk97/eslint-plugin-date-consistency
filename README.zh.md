@@ -4,8 +4,24 @@
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Playground](https://img.shields.io/badge/在线体验-Playground-7c6af7)](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)
 
 一个强制日期处理一致性的 ESLint 插件 — 防止在已使用日期库的项目中意外使用原生 `Date` 对象，并标记已废弃的库（如 Moment.js）。
+
+## Playground
+
+无需安装，直接在浏览器中体验规则效果。
+
+**[→ 打开 Playground](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)**
+
+- 粘贴代码，实时查看 lint 警告
+- 切换选项（`banNativeDate`、`checkStaticMethods`、`allowAsArgument` 等）
+- 通过预设示例按钮加载 dayjs、date-fns、moment 等场景
+- 通过 URL 分享当前代码与配置快照
+
+详细使用方法请参阅 [Playground 指南](./docs/playground.md)。
+
+---
 
 ## 为什么需要它？
 

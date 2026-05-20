@@ -4,8 +4,24 @@
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Playground](https://img.shields.io/badge/オンラインで試す-Playground-7c6af7)](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)
 
 日付処理の一貫性を強制する ESLint プラグイン — 日付ライブラリがすでに使用されているプロジェクトでネイティブの `Date` オブジェクトが誤って使用されるのを防ぎ、Moment.js のような非推奨ライブラリをフラグします。
+
+## Playground
+
+インストール不要で、ブラウザ上でルールを試せます。
+
+**[→ Playground を開く](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)**
+
+- コードを入力するとリアルタイムで lint 警告を確認できます
+- オプションをトグル（`banNativeDate`、`checkStaticMethods`、`allowAsArgument` など）
+- dayjs、date-fns、moment などのプリセット例をボタンで即座にロード
+- 現在のコードと設定を URL で共有
+
+詳細な使い方は [Playground ガイド](./docs/playground.md) を参照してください。
+
+---
 
 ## なぜ必要なのか？
 

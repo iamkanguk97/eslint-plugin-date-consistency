@@ -4,8 +4,24 @@
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Playground](https://img.shields.io/badge/Try%20it%20online-Playground-7c6af7)](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)
 
 An ESLint plugin that enforces consistent date handling — preventing accidental use of the native `Date` object when a date library is already in use, and flagging deprecated libraries like Moment.js.
+
+## Playground
+
+Try the rules interactively in your browser — no installation required.
+
+**[→ Open Playground](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)**
+
+- Paste your code and see lint warnings in real time
+- Toggle options (`banNativeDate`, `checkStaticMethods`, `allowAsArgument`, etc.)
+- Load preset examples for dayjs, date-fns, moment, and more
+- Share a specific code + config snapshot via URL
+
+See [Playground Guide](./docs/playground.md) for detailed usage.
+
+---
 
 ## Why?
 
