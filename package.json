@@ -1,12 +1,13 @@
 {
   "name": "eslint-plugin-date-consistency",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ESLint plugin to prevent mixing native Date with date libraries",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "require": "./dist/index.js",
+      "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },

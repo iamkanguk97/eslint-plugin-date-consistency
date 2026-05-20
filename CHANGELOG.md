@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-20
+
+### Fixed
+- Add `"default"` condition to `exports` field so the plugin can be imported from ESM contexts (e.g. `eslint.config.mjs`)
+
 ### Added
 - `ignorePatterns` option — glob patterns for files where `new Date()` is allowed (e.g. test files)
 - `banNativeDate` option — flags `new Date()` even when no date library is imported
