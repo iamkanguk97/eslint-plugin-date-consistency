@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-20
+
+### Fixed
+- Fix `exports` field condition order: move `"types"` before `"default"` so TypeScript can resolve type declarations correctly
+
+### Changed
+- Drop Node.js 18 support (EOL April 2025). Minimum supported version is now Node.js 20
+
 ## [1.0.2] - 2026-05-20
 
 ### Fixed
