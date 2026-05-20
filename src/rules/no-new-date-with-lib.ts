@@ -90,16 +90,16 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
       }
     }
 
-    function isInsideDateLibCall(node: TSESTree.Node): boolean {
+    // Returns true when node is passed as an argument to any function call.
+    // Used by allowAsArgument to permit new Date() inside calls like dayjs(new Date()).
+    function isInsideAnyFunctionCall(node: TSESTree.Node): boolean {
       const parent = node.parent;
       if (
         parent?.type === 'CallExpression' &&
         parent.arguments.includes(node as TSESTree.Expression)
       ) {
         const callee = parent.callee;
-        // dayjs(new Date()), format(new Date(), ...) 등
         if (callee.type === 'Identifier') return true;
-        // dayjs.utc(new Date()) 등 멤버 표현식
         if (callee.type === 'MemberExpression') return true;
       }
       return false;
@@ -107,13 +107,11 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
 
     return {
       ImportDeclaration(node) {
-        // type-only import는 무시
         if (node.importKind === 'type') return;
         checkImportSource(node.source.value);
       },
 
       CallExpression(node) {
-        // require('dayjs') 형태 감지
         if (
           node.callee.type === 'Identifier' &&
           node.callee.name === 'require' &&
@@ -130,7 +128,7 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
         if (!hasLib && !banNativeDate) return;
         if (node.callee.type !== 'Identifier' || node.callee.name !== 'Date') return;
 
-        if (allowAsArgument && hasLib && isInsideDateLibCall(node)) return;
+        if (allowAsArgument && hasLib && isInsideAnyFunctionCall(node)) return;
 
         if (hasLib) {
           context.report({ node, messageId: 'noNewDate', data: { detectedLib: detectedLib! } });
