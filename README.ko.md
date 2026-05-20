@@ -1,6 +1,6 @@
 # eslint-plugin-date-consistency
 
-**Language / 언어 / 语言 / 言語:** [English](./README.md) | [한국어](./README.ko.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md)
+**Language / 언어:** [English](./README.md) | [한국어](./README.ko.md)
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
