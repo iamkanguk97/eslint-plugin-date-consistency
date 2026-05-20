@@ -128,7 +128,7 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
         if (!hasLib && !banNativeDate) return;
         if (node.callee.type !== 'Identifier' || node.callee.name !== 'Date') return;
 
-        if (allowAsArgument && hasLib && isInsideAnyFunctionCall(node)) return;
+        if (allowAsArgument && isInsideAnyFunctionCall(node)) return;
 
         if (hasLib) {
           context.report({ node, messageId: 'noNewDate', data: { detectedLib: detectedLib! } });
@@ -150,6 +150,8 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
           node.parent?.type === 'CallExpression' &&
           node.parent.callee === node
         ) {
+          if (allowAsArgument && isInsideAnyFunctionCall(node.parent)) return;
+
           if (hasLib) {
             context.report({
               node,

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [Unreleased]
+
+### Fixed
+- Fix `allowAsArgument` being ignored when `banNativeDate: true` and no date library is imported
+- Fix `allowAsArgument` not applying to static methods (`Date.now()`, `Date.parse()`, `Date.UTC()`) when `checkStaticMethods: true`
+- Fix `meta.version` in plugin metadata to match actual package version
+
+### Added
+- Tests for `Date.UTC()` with `checkStaticMethods: true`
+- Tests for `allowAsArgument` combined with `banNativeDate` and `checkStaticMethods`
+
 ## [1.0.3] - 2026-05-20
 
 ### Fixed

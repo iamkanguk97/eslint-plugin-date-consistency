@@ -78,6 +78,21 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
       options: [{ allowAsArgument: true }],
     },
 
+    // allowAsArgument: true + banNativeDate: true — 함수 인수 안에서는 허용
+    {
+      code: `someHelper(new Date());`,
+      options: [{ banNativeDate: true, allowAsArgument: true }],
+    },
+
+    // allowAsArgument: true + checkStaticMethods: true — Date.now()가 인수로 전달되면 허용
+    {
+      code: `
+        import dayjs from 'dayjs';
+        const d = dayjs(Date.now());
+      `,
+      options: [{ checkStaticMethods: true, allowAsArgument: true }],
+    },
+
     // ignorePatterns: *.test.ts 파일에서 new Date() 허용
     {
       filename: '/project/src/utils/date.test.ts',
@@ -204,6 +219,33 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
       `,
       options: [{ checkStaticMethods: true }],
       errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'parse' } }],
+    },
+
+    // Date.UTC() — checkStaticMethods: true
+    {
+      code: `
+        import dayjs from 'dayjs';
+        const ts = Date.UTC(2024, 0, 1);
+      `,
+      options: [{ checkStaticMethods: true }],
+      errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'UTC' } }],
+    },
+
+    // banNativeDate: true + allowAsArgument: true — standalone new Date() is still flagged
+    {
+      code: `const d = new Date();`,
+      options: [{ banNativeDate: true, allowAsArgument: true }],
+      errors: [{ messageId: 'noNewDateBanned' }],
+    },
+
+    // checkStaticMethods: true + allowAsArgument: true — standalone Date.now() still flagged
+    {
+      code: `
+        import dayjs from 'dayjs';
+        const ts = Date.now();
+      `,
+      options: [{ checkStaticMethods: true, allowAsArgument: true }],
+      errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'now' } }],
     },
 
     // 커스텀 libs 설정
