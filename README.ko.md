@@ -19,7 +19,7 @@
 - dayjs, date-fns, moment 등 예제 버튼으로 즉시 로드
 - 현재 코드 + 설정을 URL로 공유
 
-자세한 사용법은 [Playground 가이드](./docs/playground.md)를 참고하세요.
+자세한 사용법은 [Playground 가이드](./docs/playground.ko.md)를 참고하세요.
 
 ---
 
