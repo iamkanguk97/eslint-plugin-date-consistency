@@ -3,7 +3,7 @@
 **Language / 언어 / 语言 / 言語:** [English](./README.md) | [한국어](./README.ko.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md)
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
-[![license](https://img.shields.io/npm/l/eslint-plugin-date-consistency)](./LICENSE)
+[![license](https://img.shields.io/github/license/iamkanguk97/eslint-plugin-date-consistency)](./LICENSE)
 
 An ESLint plugin that enforces consistent date handling — preventing accidental use of the native `Date` object when a date library is already in use, and flagging deprecated libraries like Moment.js.
 

@@ -3,7 +3,7 @@
 **Language / 언어 / 语言 / 言語:** [English](./README.md) | [한국어](./README.ko.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md)
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
-[![license](https://img.shields.io/npm/l/eslint-plugin-date-consistency)](./LICENSE)
+[![license](https://img.shields.io/github/license/iamkanguk97/eslint-plugin-date-consistency)](./LICENSE)
 
 날짜 처리의 일관성을 강제하는 ESLint 플러그인 — 날짜 라이브러리를 이미 사용 중인 프로젝트에서 네이티브 `Date` 객체를 실수로 사용하는 경우를 감지하고, Moment.js처럼 더 이상 유지보수되지 않는 라이브러리 사용을 경고합니다.
 

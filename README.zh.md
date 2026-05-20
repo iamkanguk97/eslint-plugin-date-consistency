@@ -3,7 +3,7 @@
 **Language / 언어 / 语言 / 言語:** [English](./README.md) | [한국어](./README.ko.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md)
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-date-consistency)](https://www.npmjs.com/package/eslint-plugin-date-consistency)
-[![license](https://img.shields.io/npm/l/eslint-plugin-date-consistency)](./LICENSE)
+[![license](https://img.shields.io/github/license/iamkanguk97/eslint-plugin-date-consistency)](./LICENSE)
 
 一个强制日期处理一致性的 ESLint 插件 — 防止在已使用日期库的项目中意外使用原生 `Date` 对象，并标记已废弃的库（如 Moment.js）。
 
