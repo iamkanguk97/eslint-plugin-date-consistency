@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-05-20
+
+### Fixed
+- Move `@typescript-eslint/utils` from `devDependencies` to `dependencies` so it is available at runtime when the plugin is installed
+
 ## [1.0.1] - 2026-05-20
 
 ### Fixed

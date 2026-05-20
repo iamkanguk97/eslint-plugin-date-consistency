@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-date-consistency",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "ESLint plugin to prevent mixing native Date with date libraries",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -49,12 +49,12 @@
   "devDependencies": {
     "@typescript-eslint/parser": "^8.59.4",
     "@typescript-eslint/rule-tester": "^8.59.4",
-    "@typescript-eslint/utils": "^8.59.4",
     "eslint": "^10.4.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
   },
   "dependencies": {
+    "@typescript-eslint/utils": "^8.59.4",
     "minimatch": "^10.2.5"
   }
 }
