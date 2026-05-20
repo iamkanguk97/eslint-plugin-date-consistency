@@ -365,6 +365,36 @@ export default [
 
 ---
 
+## Known Limitations
+
+### CJS `require` must appear before `new Date()`
+
+ESLint visits AST nodes in a single top-to-bottom pass. If a `require()` call appears **after** `new Date()` in the same file, the rule will not detect it:
+
+```js
+const d = new Date();          // ← not flagged: require hasn't been seen yet
+const dayjs = require('dayjs');
+```
+
+This is an inherent constraint of ESLint's single-pass visitor model. The workaround is to keep `require()` at the top of the file — which is standard practice anyway.
+
+ESM `import` declarations are always hoisted to the top of the file by the language spec, so this limitation does not apply to ESM.
+
+### `allowAsArgument` allows `new Date()` inside any function call
+
+When `allowAsArgument: true`, the rule permits `new Date()` whenever it is passed as an argument to **any** function — not only date library functions:
+
+```js
+import dayjs from 'dayjs';
+
+dayjs(new Date());           // ✅ allowed — intended use case
+someOtherFn(new Date());     // ✅ also allowed — may be unexpected
+```
+
+If you need stricter control, keep `allowAsArgument: false` (the default) and handle `dayjs(new Date())` as a separate lint disable comment where needed.
+
+---
+
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md).
