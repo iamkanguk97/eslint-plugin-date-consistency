@@ -1,0 +1,59 @@
+{
+  "name": "eslint-plugin-date-consistency",
+  "version": "1.0.0",
+  "description": "ESLint plugin to prevent mixing native Date with date libraries",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "date",
+    "dayjs",
+    "date-fns",
+    "luxon",
+    "moment",
+    "lint",
+    "consistency"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamkanguk97/eslint-plugin-date-consistency.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iamkanguk97/eslint-plugin-date-consistency/issues"
+  },
+  "homepage": "https://github.com/iamkanguk97/eslint-plugin-date-consistency#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^8.59.4",
+    "@typescript-eslint/rule-tester": "^8.59.4",
+    "@typescript-eslint/utils": "^8.59.4",
+    "eslint": "^10.4.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  },
+  "dependencies": {
+    "minimatch": "^10.2.5"
+  }
+}
