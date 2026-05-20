@@ -96,7 +96,7 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
       const parent = node.parent;
       if (
         parent?.type === 'CallExpression' &&
-        parent.arguments.includes(node as TSESTree.Expression)
+        parent.arguments.some((arg) => arg === node)
       ) {
         const callee = parent.callee;
         if (callee.type === 'Identifier') return true;
@@ -130,8 +130,8 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
 
         if (allowAsArgument && isInsideAnyFunctionCall(node)) return;
 
-        if (hasLib) {
-          context.report({ node, messageId: 'noNewDate', data: { detectedLib: detectedLib! } });
+        if (detectedLib !== null) {
+          context.report({ node, messageId: 'noNewDate', data: { detectedLib } });
         } else {
           context.report({ node, messageId: 'noNewDateBanned', data: { libs: libs.join(', ') } });
         }
@@ -152,11 +152,11 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
         ) {
           if (allowAsArgument && isInsideAnyFunctionCall(node.parent)) return;
 
-          if (hasLib) {
+          if (detectedLib !== null) {
             context.report({
               node,
               messageId: 'noStaticDate',
-              data: { detectedLib: detectedLib!, method: node.property.name },
+              data: { detectedLib, method: node.property.name },
             });
           } else {
             context.report({

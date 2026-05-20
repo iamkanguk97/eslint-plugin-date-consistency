@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-05-20
+
 ### Fixed
 - Fix `allowAsArgument` being ignored when `banNativeDate: true` and no date library is imported
 - Fix `allowAsArgument` not applying to static methods (`Date.now()`, `Date.parse()`, `Date.UTC()`) when `checkStaticMethods: true`
 - Fix `meta.version` in plugin metadata to match actual package version
+- Remove non-null assertion (`!`) on `detectedLib` — replaced with proper TypeScript narrowing
+- Replace unsafe `includes(node as TSESTree.Expression)` cast with type-safe identity comparison
+- Add explicit `"import"` condition to `exports` field for ESM environments
 
 ### Added
 - Tests for `Date.UTC()` with `checkStaticMethods: true`
