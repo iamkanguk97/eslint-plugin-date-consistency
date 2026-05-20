@@ -33,7 +33,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/iamkanguk97/eslint-plugin-date-consistency.git"
+    "url": "git+https://github.com/iamkanguk97/eslint-plugin-date-consistency.git"
   },
   "bugs": {
     "url": "https://github.com/iamkanguk97/eslint-plugin-date-consistency/issues"
