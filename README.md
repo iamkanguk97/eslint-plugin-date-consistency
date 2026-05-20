@@ -37,6 +37,19 @@ This plugin catches these issues at lint time, before they reach code review or 
 
 ---
 
+## Requirements
+
+| Requirement | Minimum Version |
+|-------------|:---------------:|
+| Node.js | `>= 20.0.0` |
+| ESLint | `>= 8.0.0` |
+
+**Package managers:** npm, pnpm, and yarn are all supported.
+
+**TypeScript:** Not required. Works with both JavaScript and TypeScript projects.
+
+---
+
 ## Installation
 
 ```bash

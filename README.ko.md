@@ -37,6 +37,19 @@ const d = dayjs();
 
 ---
 
+## 사용 조건
+
+| 항목 | 최소 버전 |
+|------|:---------:|
+| Node.js | `>= 20.0.0` |
+| ESLint | `>= 8.0.0` |
+
+**패키지 매니저:** npm, pnpm, yarn 모두 지원합니다.
+
+**TypeScript:** 필수가 아닙니다. JavaScript 및 TypeScript 프로젝트 모두에서 동작합니다.
+
+---
+
 ## 설치
 
 ```bash

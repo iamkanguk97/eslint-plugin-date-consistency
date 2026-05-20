@@ -37,6 +37,19 @@ const d = dayjs();
 
 ---
 
+## 环境要求
+
+| 要求 | 最低版本 |
+|------|:--------:|
+| Node.js | `>= 20.0.0` |
+| ESLint | `>= 8.0.0` |
+
+**包管理器：** 支持 npm、pnpm 和 yarn。
+
+**TypeScript：** 非必需。同时支持 JavaScript 和 TypeScript 项目。
+
+---
+
 ## 安装
 
 ```bash
