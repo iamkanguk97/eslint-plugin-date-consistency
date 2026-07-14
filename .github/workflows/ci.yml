@@ -30,3 +30,9 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Install playground dependencies
+        run: cd playground && npm install
+
+      - name: Test playground linter
+        run: cd playground && npm test

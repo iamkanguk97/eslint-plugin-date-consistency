@@ -135,17 +135,20 @@ module.exports = {
 
 설정된 날짜 라이브러리가 임포트된 파일에서 `new Date()` (및 선택적으로 `Date.now()`, `Date.parse()`)의 사용을 금지합니다.
 
-에러 메시지에는 감지된 라이브러리 이름이 포함되므로, 무엇을 대신 사용해야 하는지 바로 알 수 있습니다:
+에러 메시지에는 감지된 라이브러리 이름과 구체적인 대체 표현이 포함됩니다:
 
 ```
-'dayjs' is already imported. Use it instead of 'new Date()'.
+'dayjs' is already imported. Use 'dayjs()' instead of 'new Date()'.
 ```
+
+> **참고:** date-fns는 다른 라이브러리와 다르게 처리됩니다 — 아래 [date-fns 처리 방식](#date-fns-처리-방식)을 참고하세요.
 
 #### 옵션
 
 ```js
 'date-consistency/no-new-date-with-lib': ['warn', {
   libs: ['dayjs', 'date-fns', 'moment', 'luxon'], // 기본값
+  nativeLibs: ['date-fns'],                        // 기본값
   allowAsArgument: false,                          // 기본값
   checkStaticMethods: false,                       // 기본값
   ignorePatterns: [],                              // 기본값
@@ -156,8 +159,9 @@ module.exports = {
 | 옵션 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
 | `libs` | `string[]` | `['dayjs', 'date-fns', 'moment', 'luxon']` | 감시할 날짜 라이브러리 목록. 서브패스 임포트(예: `date-fns/format`)와 스코프 패키지를 지원합니다. |
+| `nativeLibs` | `string[]` | `['date-fns']` | `libs` 중 네이티브 `Date` 객체를 기반으로 동작하는 라이브러리 — `Date` 생성이 관용구인 라이브러리입니다. [date-fns 처리 방식](#date-fns-처리-방식)을 참고하세요. |
 | `allowAsArgument` | `boolean` | `false` | `true`이면 함수 호출의 인수로 전달되는 `new Date()`를 허용합니다 (예: `dayjs(new Date())`). |
-| `checkStaticMethods` | `boolean` | `false` | `true`이면 `Date.now()`, `Date.parse()`, `Date.UTC()`도 검사합니다. |
+| `checkStaticMethods` | `boolean` | `false` | `true`이면 `Date.now()`, `Date.UTC()`도 검사합니다. 네이티브 Date 기반 라이브러리의 `Date.parse()`는 이 옵션과 무관하게 항상 검사됩니다 (아래 참고). |
 | `ignorePatterns` | `string[]` | `[]` | `new Date()`를 항상 허용할 파일의 글로브 패턴. 테스트 파일에 유용합니다. |
 | `banNativeDate` | `boolean` | `false` | `true`이면 날짜 라이브러리를 임포트하지 않은 파일에서도 `new Date()`를 금지합니다. |
 
@@ -166,23 +170,23 @@ module.exports = {
 ```js
 // ESM 기본 임포트
 import dayjs from 'dayjs';
-const d = new Date(); // ⚠ 'dayjs' is already imported. Use it instead of 'new Date()'.
+const d = new Date(); // ⚠ 'dayjs' is already imported. Use 'dayjs()' instead of 'new Date()'.
 
 // 명명된 임포트
-import { format } from 'date-fns';
-const d = new Date(); // ⚠ 'date-fns' is already imported. Use it instead of 'new Date()'.
+import { DateTime } from 'luxon';
+const d = new Date(); // ⚠ 'luxon' is already imported. Use 'DateTime.now()' instead of 'new Date()'.
 
 // 서브패스 임포트
-import { format } from 'date-fns/format';
+import utc from 'dayjs/plugin/utc';
 const d = new Date(); // ⚠
 
 // CommonJS require
 const dayjs = require('dayjs');
 const d = new Date(); // ⚠
 
-// 인수가 있는 new Date()
+// 인수가 있는 new Date() — 'dayjs()'처럼 인자를 버리는 대체 표현을 제안하지 않음
 import dayjs from 'dayjs';
-const d = new Date('2024-01-01'); // ⚠
+const d = new Date('2024-01-01'); // ⚠ 'dayjs' is already imported. Replace 'new Date(...)' with an equivalent dayjs call that preserves the same arguments.
 
 // 인수로 전달 (allowAsArgument: false가 기본값)
 import dayjs from 'dayjs';
@@ -190,7 +194,12 @@ const d = dayjs(new Date()); // ⚠
 
 // checkStaticMethods: true일 때 Date.now()
 import dayjs from 'dayjs';
-const ts = Date.now(); // ⚠ 'dayjs' is already imported. Use it instead of 'Date.now'.
+const ts = Date.now(); // ⚠ 'dayjs' is already imported. Use 'dayjs()' instead of 'Date.now'.
+
+// date-fns: 신뢰할 수 없는 문자열 파싱만 경고
+import { format } from 'date-fns';
+const a = new Date('2024-01-01');    // ⚠ Parsing date strings with new Date(string) is unreliable across engines. Use 'parseISO()' from date-fns instead.
+const b = Date.parse('2024-01-01');  // ⚠ 동일한 경고 (checkStaticMethods 없이도 발생)
 ```
 
 #### 허용되는 경우
@@ -218,7 +227,59 @@ const d = dayjs(new Date()); // allowAsArgument가 true이면 ok
 // 설정된 libs 목록에 없는 라이브러리
 import axios from 'axios';
 const d = new Date(); // ok
+
+// date-fns는 네이티브 Date를 기반으로 동작 — Date 생성은 관용구
+import { format } from 'date-fns';
+const now = new Date();                  // ok
+const label = format(now, 'yyyy-MM-dd'); // ok
+
+// date-fns: 다중 인자 생성자는 문자열 파싱이 아님
+import { addDays } from 'date-fns';
+const d = new Date('2024', 0, 1); // ok — year/month/day 구성 요소이지 new Date(string)가 아님
+
+// date-fns: checkStaticMethods와 banNativeDate가 모두 설정되지 않으면 Date.now()/Date.UTC()는 허용
+import { format } from 'date-fns';
+const ts = Date.now(); // ok
 ```
+
+#### date-fns 처리 방식
+
+기본 감지 대상 라이브러리는 두 부류로 나뉩니다:
+
+| 부류 | 라이브러리 | 날짜 표현 방식 |
+|------|-----------|---------------|
+| **래퍼(wrapper)형** | dayjs, moment, luxon | 네이티브 `Date`를 대체하는 자체 객체(`Dayjs`, `Moment`, `DateTime`)를 제공 |
+| **네이티브 Date 기반** | date-fns | 네이티브 `Date`를 입력받고 반환하는 순수 함수 모음 |
+
+래퍼형 라이브러리에서는 `new Date()`가 두 가지 날짜 표현을 섞는 것이므로 항상 경고합니다.
+
+**date-fns**에서는 네이티브 `Date`가 곧 날짜 표현입니다 — `format(new Date(), 'yyyy-MM-dd')`는 라이브러리의 공식 관용구이며, date-fns에는 `new Date()`를 대체하는 함수가 없습니다. 따라서 date-fns를 임포트한 파일에서는 실제로 위험한 패턴만 경고합니다:
+
+- `new Date('2024-01-01')` (문자열/템플릿 리터럴 인자 1개) — 문자열 파싱은 엔진마다 결과가 다름. `parseISO()`를 사용하세요. `new Date('2024', 0, 1)`처럼 인자가 여러 개면 year/month/day 숫자 생성자이지 문자열 파싱이 아니므로 경고하지 않습니다.
+- `Date.parse('2024-01-01')` — `new Date(string)`과 같은 함정이므로 `checkStaticMethods`와 무관하게 항상 경고됩니다.
+
+인자 없는 `new Date()`, `new Date(timestamp)`, `new Date(y, m, d)`, `Date.now()`/`Date.UTC()`는 기본적으로 허용됩니다 — 이들은 인자 없는 `new Date()`와 같은 부류의 관용적인 임의 생성입니다.
+
+date-fns 프로젝트에서도 임의의 날짜 생성을 금지하고 싶다면(예: mock 가능한 clock 헬퍼로 중앙화), `banNativeDate: true`를 사용하세요. `Date.now()`/`Date.UTC()`까지 검사하려면 `checkStaticMethods: true`도 함께 설정해야 합니다 (모든 라이브러리에서 static method를 검사하기 위한 공통 전제 조건입니다) — `new Date()`/`Date.parse()`는 `checkStaticMethods`와 무관하게 항상 검사되므로 영향받지 않습니다.
+
+```js
+'date-consistency/no-new-date-with-lib': ['warn', { banNativeDate: true }]
+// ⚠ Avoid ad-hoc 'new Date()'. Centralize date creation (e.g. in a clock helper) so it can be mocked in tests.
+
+'date-consistency/no-new-date-with-lib': ['warn', { banNativeDate: true, checkStaticMethods: true }]
+// ⚠ Avoid ad-hoc 'Date.now()'. Centralize date creation (e.g. in a clock helper) so it can be mocked in tests.
+```
+
+`nativeLibs`를 사용하면 사내에서 만든 네이티브 Date 기반 유틸리티도 date-fns와 동일하게 취급할 수 있습니다:
+
+```js
+'date-consistency/no-new-date-with-lib': ['warn', {
+  libs: ['dayjs', 'my-internal-date-utils'],
+  nativeLibs: ['my-internal-date-utils'],
+}]
+```
+
+한 파일에서 래퍼 라이브러리와 네이티브 Date 기반 라이브러리를 함께 임포트하면 래퍼 기준으로 동작합니다 — 래퍼의 자체 객체가 있는 이상 `new Date()`는 다시 비일관성이 되기 때문입니다.
 
 #### 사용 예시
 
@@ -351,7 +412,9 @@ export default [
 ];
 ```
 
-### date-fns 프로젝트 — 엄격 모드
+### date-fns 프로젝트
+
+관용적인 `new Date()`는 허용되고, 신뢰할 수 없는 문자열 파싱(`new Date('...')`, `Date.parse()`)은 자동으로 경고됩니다:
 
 ```js
 import dateConsistency from 'eslint-plugin-date-consistency';
@@ -362,13 +425,23 @@ export default [
     rules: {
       'date-consistency/no-new-date-with-lib': ['error', {
         libs: ['date-fns'],
-        checkStaticMethods: true,
         ignorePatterns: ['**/*.test.*'],
       }],
       'date-consistency/no-deprecated-date-lib': 'error',
     },
   },
 ];
+```
+
+임의의 날짜 생성까지 금지하려면(mock 가능한 clock 헬퍼로 중앙화) `banNativeDate: true`를 추가하세요. `new Date()`뿐 아니라 `Date.now()`/`Date.UTC()`까지 포함하려면 `checkStaticMethods: true`도 함께 추가하세요:
+
+```js
+'date-consistency/no-new-date-with-lib': ['error', {
+  libs: ['date-fns'],
+  banNativeDate: true,
+  checkStaticMethods: true,
+  ignorePatterns: ['**/*.test.*'],
+}],
 ```
 
 ### Moment.js에서 마이그레이션

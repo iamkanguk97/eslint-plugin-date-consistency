@@ -21,9 +21,13 @@ const formatted = dayjs().format('YYYY-MM-DD');
     label: 'date-fns',
     code: `import { format } from 'date-fns';
 
-// ⚠ new Date() should be replaced with date-fns utilities
+// ✓ idiomatic date-fns — it operates on native Date objects
 const now = new Date();
-const formatted = format(new Date(), 'yyyy-MM-dd');
+const formatted = format(now, 'yyyy-MM-dd');
+
+// ⚠ parsing strings with new Date() / Date.parse() is unreliable
+const parsed = new Date('2026-07-14');
+const ts = Date.parse('2026-07-14');
 `,
     options: {},
   },

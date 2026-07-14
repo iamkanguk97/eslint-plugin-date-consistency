@@ -12,6 +12,7 @@ export interface LintMessage {
 
 export interface PluginOptions {
   libs?: string[];
+  nativeLibs?: string[];
   allowAsArgument?: boolean;
   checkStaticMethods?: boolean;
   banNativeDate?: boolean;
@@ -21,6 +22,25 @@ export interface PluginOptions {
 const DEFAULT_LIBS = ['dayjs', 'date-fns', 'moment', 'luxon'];
 const DEFAULT_DEPRECATED = ['moment'];
 const DEFAULT_ALTERNATIVES: Record<string, string> = { moment: 'dayjs or date-fns' };
+
+// Mirror of src/rules/no-new-date-with-lib.ts — keep in sync.
+const WRAPPER_REPLACEMENTS: Record<string, string> = {
+  dayjs: "'dayjs()'",
+  moment: "'moment()'",
+  luxon: "'DateTime.now()'",
+};
+const DATE_NATIVE_LIBS = ['date-fns']; // default; overridable via PluginOptions.nativeLibs
+const PARSE_ALTERNATIVES: Record<string, string> = {
+  'date-fns': "'parseISO()' from date-fns",
+};
+
+function wrapperReplacement(lib: string): string {
+  return WRAPPER_REPLACEMENTS[lib] ?? 'it';
+}
+
+function parseAlternative(lib: string): string {
+  return PARSE_ALTERNATIVES[lib] ?? 'a dedicated parsing function';
+}
 
 function normalizePackageName(source: string): string {
   if (source.startsWith('@')) return source.split('/').slice(0, 2).join('/');
@@ -80,13 +100,26 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
   }
 
   const libs = options.libs ?? DEFAULT_LIBS;
+  const nativeLibs = options.nativeLibs ?? DATE_NATIVE_LIBS;
   const allowAsArgument = options.allowAsArgument ?? false;
   const checkStaticMethods = options.checkStaticMethods ?? false;
   const banNativeDate = options.banNativeDate ?? false;
   const deprecated = options.deprecated ?? DEFAULT_DEPRECATED;
   const alternatives = { ...DEFAULT_ALTERNATIVES };
 
-  let detectedLib: string | null = null;
+  // A wrapper lib takes precedence over a native-Date lib when both are
+  // imported — mirrors the real rule.
+  let detectedWrapperLib: string | null = null;
+  let detectedNativeLib: string | null = null;
+
+  function registerLib(pkg: string): void {
+    if (!libs.includes(pkg)) return;
+    if (nativeLibs.includes(pkg)) {
+      detectedNativeLib ??= pkg;
+    } else {
+      detectedWrapperLib ??= pkg;
+    }
+  }
 
   // Pass 1: collect imports + check deprecated libs
   walk(ast as Node, {
@@ -94,7 +127,7 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
       const n = node as unknown as acorn.ImportDeclaration;
       const source = n.source.value as string;
       const pkg = normalizePackageName(source);
-      if (detectedLib === null && libs.includes(pkg)) detectedLib = pkg;
+      registerLib(pkg);
       if (deprecated.includes(pkg)) {
         const alt = alternatives[pkg] ?? null;
         messages.push({
@@ -118,31 +151,76 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
       ) {
         const source = (n.arguments[0] as acorn.Literal).value as string;
         const pkg = normalizePackageName(source);
-        if (detectedLib === null && libs.includes(pkg)) detectedLib = pkg;
+        registerLib(pkg);
       }
     },
   });
 
-  // Pass 2: check Date usage (detectedLib is now fully resolved)
+  // Only a single string/template-literal argument is a parse call
+  // (new Date(string)); with more arguments, the first one is a numeric
+  // date component (new Date(year, month, ...)), not a parsed string.
+  function isUnreliableParseCall(args: (acorn.Expression | acorn.SpreadElement)[]): boolean {
+    if (args.length !== 1) return false;
+    const [arg] = args;
+    if (arg.type === 'Literal') return typeof (arg as acorn.Literal).value === 'string';
+    return arg.type === 'TemplateLiteral';
+  }
+
+  function report(node: Node, message: string): void {
+    messages.push({
+      ruleId: 'date-consistency/no-new-date-with-lib',
+      message,
+      severity: 1,
+      ...loc(node),
+    });
+  }
+
+  // Pass 2: check Date usage (detected libs are now fully resolved)
   walk(ast as Node, {
     NewExpression(node) {
       const n = node as unknown as acorn.NewExpression;
-      if (!detectedLib && !banNativeDate) return;
       if (n.callee.type !== 'Identifier' || (n.callee as acorn.Identifier).name !== 'Date') return;
       if (allowAsArgument && isInsideAnyCall(node)) return;
-      messages.push({
-        ruleId: 'date-consistency/no-new-date-with-lib',
-        message: detectedLib
-          ? `'${detectedLib}' is already imported. Use it instead of 'new Date()'.`
-          : `Avoid using native 'new Date()'. Use a date library instead (e.g. ${libs.join(', ')}).`,
-        severity: 1,
-        ...loc(node),
-      });
+
+      if (detectedWrapperLib) {
+        if (n.arguments.length === 0) {
+          report(
+            node,
+            `'${detectedWrapperLib}' is already imported. Use ${wrapperReplacement(detectedWrapperLib)} instead of 'new Date()'.`,
+          );
+        } else {
+          report(
+            node,
+            `'${detectedWrapperLib}' is already imported. Replace 'new Date(...)' with an equivalent ${detectedWrapperLib} call that preserves the same arguments.`,
+          );
+        }
+        return;
+      }
+
+      if (detectedNativeLib) {
+        if (isUnreliableParseCall(n.arguments)) {
+          report(
+            node,
+            `Parsing date strings with new Date(string) is unreliable across engines. Use ${parseAlternative(detectedNativeLib)} instead.`,
+          );
+        } else if (banNativeDate) {
+          report(
+            node,
+            "Avoid ad-hoc 'new Date()'. Centralize date creation (e.g. in a clock helper) so it can be mocked in tests.",
+          );
+        }
+        return;
+      }
+
+      if (banNativeDate) {
+        report(
+          node,
+          `Avoid using native 'new Date()'. Use a date library instead (e.g. ${libs.join(', ')}).`,
+        );
+      }
     },
     MemberExpression(node) {
       const n = node as unknown as acorn.MemberExpression;
-      if (!checkStaticMethods) return;
-      if (!detectedLib && !banNativeDate) return;
       if (
         n.object.type !== 'Identifier' ||
         (n.object as acorn.Identifier).name !== 'Date' ||
@@ -153,14 +231,49 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
       ) return;
       if (allowAsArgument && node.parent && isInsideAnyCall(node.parent)) return;
       const method = (n.property as acorn.Identifier).name;
-      messages.push({
-        ruleId: 'date-consistency/no-new-date-with-lib',
-        message: detectedLib
-          ? `'${detectedLib}' is already imported. Use it instead of 'Date.${method}'.`
-          : `Avoid using native 'Date.${method}()'. Use a date library instead (e.g. ${libs.join(', ')}).`,
-        severity: 1,
-        ...loc(node),
-      });
+      const callArgs = (node.parent as unknown as acorn.CallExpression).arguments;
+
+      if (detectedWrapperLib) {
+        if (!checkStaticMethods) return;
+        if (callArgs.length === 0) {
+          report(
+            node,
+            `'${detectedWrapperLib}' is already imported. Use ${wrapperReplacement(detectedWrapperLib)} instead of 'Date.${method}'.`,
+          );
+        } else {
+          report(
+            node,
+            `'${detectedWrapperLib}' is already imported. Replace 'Date.${method}(...)' with an equivalent ${detectedWrapperLib} call that preserves the same arguments.`,
+          );
+        }
+        return;
+      }
+
+      // Date.parse() is a string-parsing trap, so — like new Date(string) —
+      // it is flagged regardless of checkStaticMethods. Date.now()/UTC() are
+      // idiomatic bare creation for native-Date libs and are only flagged
+      // when checkStaticMethods AND banNativeDate are both set.
+      if (detectedNativeLib) {
+        if (method === 'parse') {
+          report(
+            node,
+            `Parsing date strings with Date.parse() is unreliable across engines. Use ${parseAlternative(detectedNativeLib)} instead.`,
+          );
+        } else if (banNativeDate && checkStaticMethods) {
+          report(
+            node,
+            `Avoid ad-hoc 'Date.${method}()'. Centralize date creation (e.g. in a clock helper) so it can be mocked in tests.`,
+          );
+        }
+        return;
+      }
+
+      if (banNativeDate && checkStaticMethods) {
+        report(
+          node,
+          `Avoid using native 'Date.${method}()'. Use a date library instead (e.g. ${libs.join(', ')}).`,
+        );
+      }
     },
   });
 

@@ -85,7 +85,7 @@ Six preset examples load a complete code snippet and the matching options:
 | Button | What it demonstrates |
 |--------|----------------------|
 | **dayjs** | `import dayjs` + `new Date()` → `noNewDate` warning |
-| **date-fns** | `import { format } from 'date-fns'` + `new Date()` → warning |
+| **date-fns** | bare `new Date()` is allowed (idiomatic date-fns); `new Date('...')` / `Date.parse()` → parsing warning |
 | **moment (deprecated)** | `import moment from 'moment'` → `deprecatedLib` warning |
 | **banNativeDate** | `new Date()` without any library import → warning (banNativeDate + checkStaticMethods enabled) |
 | **checkStaticMethods** | `Date.now()` and `Date.UTC()` with dayjs → warning |

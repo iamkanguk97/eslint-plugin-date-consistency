@@ -135,17 +135,20 @@ module.exports = {
 
 Disallows `new Date()` (and optionally `Date.now()`, `Date.parse()`) in files that import a configured date library.
 
-The error message includes the name of the detected library so you know exactly what to use instead:
+The error message includes the detected library and a concrete replacement:
 
 ```
-'dayjs' is already imported. Use it instead of 'new Date()'.
+'dayjs' is already imported. Use 'dayjs()' instead of 'new Date()'.
 ```
+
+> **Note:** date-fns is handled differently from the other libraries — see [How date-fns is handled](#how-date-fns-is-handled) below.
 
 #### Options
 
 ```js
 'date-consistency/no-new-date-with-lib': ['warn', {
   libs: ['dayjs', 'date-fns', 'moment', 'luxon'], // default
+  nativeLibs: ['date-fns'],                        // default
   allowAsArgument: false,                          // default
   checkStaticMethods: false,                       // default
   ignorePatterns: [],                              // default
@@ -156,8 +159,9 @@ The error message includes the name of the detected library so you know exactly 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `libs` | `string[]` | `['dayjs', 'date-fns', 'moment', 'luxon']` | Date libraries to watch for. Supports subpath imports (e.g. `date-fns/format`) and scoped packages. |
+| `nativeLibs` | `string[]` | `['date-fns']` | Libraries in `libs` that operate on native `Date` objects, so creating a `Date` is idiomatic for them. See [How date-fns is handled](#how-date-fns-is-handled). |
 | `allowAsArgument` | `boolean` | `false` | When `true`, allows `new Date()` when passed as an argument to a function call (e.g. `dayjs(new Date())`). |
-| `checkStaticMethods` | `boolean` | `false` | When `true`, also flags `Date.now()`, `Date.parse()`, and `Date.UTC()`. |
+| `checkStaticMethods` | `boolean` | `false` | When `true`, also flags `Date.now()` and `Date.UTC()`. For native-Date libraries, `Date.parse()` is always flagged regardless of this option (see below). |
 | `ignorePatterns` | `string[]` | `[]` | Glob patterns for files where `new Date()` is always allowed. Useful for test files. |
 | `banNativeDate` | `boolean` | `false` | When `true`, flags `new Date()` even in files that do not import a date library. |
 
@@ -166,23 +170,24 @@ The error message includes the name of the detected library so you know exactly 
 ```js
 // ESM default import
 import dayjs from 'dayjs';
-const d = new Date(); // ⚠ 'dayjs' is already imported. Use it instead of 'new Date()'.
+const d = new Date(); // ⚠ 'dayjs' is already imported. Use 'dayjs()' instead of 'new Date()'.
 
 // Named import
-import { format } from 'date-fns';
-const d = new Date(); // ⚠ 'date-fns' is already imported. Use it instead of 'new Date()'.
+import { DateTime } from 'luxon';
+const d = new Date(); // ⚠ 'luxon' is already imported. Use 'DateTime.now()' instead of 'new Date()'.
 
 // Subpath import
-import { format } from 'date-fns/format';
+import utc from 'dayjs/plugin/utc';
 const d = new Date(); // ⚠
 
 // CommonJS require
 const dayjs = require('dayjs');
 const d = new Date(); // ⚠
 
-// new Date() with arguments
+// new Date() with arguments — the message doesn't claim a bare no-arg
+// replacement, since e.g. 'dayjs()' would silently drop the date
 import dayjs from 'dayjs';
-const d = new Date('2024-01-01'); // ⚠
+const d = new Date('2024-01-01'); // ⚠ 'dayjs' is already imported. Replace 'new Date(...)' with an equivalent dayjs call that preserves the same arguments.
 
 // Passing new Date() as argument (allowAsArgument: false, the default)
 import dayjs from 'dayjs';
@@ -190,7 +195,12 @@ const d = dayjs(new Date()); // ⚠
 
 // Date.now() when checkStaticMethods: true
 import dayjs from 'dayjs';
-const ts = Date.now(); // ⚠ 'dayjs' is already imported. Use it instead of 'Date.now'.
+const ts = Date.now(); // ⚠ 'dayjs' is already imported. Use 'dayjs()' instead of 'Date.now'.
+
+// date-fns: only unreliable string parsing is flagged
+import { format } from 'date-fns';
+const a = new Date('2024-01-01');    // ⚠ Parsing date strings with new Date(string) is unreliable across engines. Use 'parseISO()' from date-fns instead.
+const b = Date.parse('2024-01-01');  // ⚠ same warning (flagged even without checkStaticMethods)
 ```
 
 #### What is allowed
@@ -218,7 +228,59 @@ const d = dayjs(new Date()); // ok when allowAsArgument is true
 // Libraries not in the configured libs list
 import axios from 'axios';
 const d = new Date(); // ok
+
+// date-fns operates on native Date — creating one is idiomatic
+import { format } from 'date-fns';
+const now = new Date();               // ok
+const label = format(now, 'yyyy-MM-dd'); // ok
+
+// date-fns: a multi-argument constructor is not string parsing
+import { addDays } from 'date-fns';
+const d = new Date('2024', 0, 1); // ok — year/month/day components, not new Date(string)
+
+// date-fns: Date.now()/Date.UTC() are allowed unless checkStaticMethods AND banNativeDate are both set
+import { format } from 'date-fns';
+const ts = Date.now(); // ok
 ```
+
+#### How date-fns is handled
+
+The default libraries fall into two kinds:
+
+| Kind | Libraries | Date representation |
+|------|-----------|---------------------|
+| **Wrapper** | dayjs, moment, luxon | Provide their own object (`Dayjs`, `Moment`, `DateTime`) that replaces native `Date` |
+| **Native-Date** | date-fns | Pure functions that take and return native `Date` objects |
+
+For wrapper libraries, any `new Date()` mixes two date representations, so it is always flagged.
+
+For **date-fns**, native `Date` **is** the date representation — `format(new Date(), 'yyyy-MM-dd')` is the library's official idiom, and date-fns has no function that replaces `new Date()`. So in files importing date-fns the rule only flags the genuinely dangerous patterns:
+
+- `new Date('2024-01-01')` (a single string/template-literal argument) — string parsing varies across engines; use `parseISO()` instead. A multi-argument call like `new Date('2024', 0, 1)` is the numeric year/month/day constructor, not string parsing, so it's not flagged.
+- `Date.parse('2024-01-01')` — the same trap as `new Date(string)`, so it's flagged regardless of `checkStaticMethods`.
+
+Bare `new Date()`, `new Date(timestamp)`, `new Date(y, m, d)`, and `Date.now()`/`Date.UTC()` are allowed by default — they're idiomatic ad-hoc creation, the same category as bare `new Date()`.
+
+If your team wants to forbid ad-hoc date creation in date-fns projects too (e.g. to centralize it in a mockable clock helper), use `banNativeDate: true`. `Date.now()`/`Date.UTC()` additionally require `checkStaticMethods: true` to be inspected at all (the same precondition static methods need for every library) — `new Date()`/`Date.parse()` aren't affected by `checkStaticMethods` since they're checked unconditionally.
+
+```js
+'date-consistency/no-new-date-with-lib': ['warn', { banNativeDate: true }]
+// ⚠ Avoid ad-hoc 'new Date()'. Centralize date creation (e.g. in a clock helper) so it can be mocked in tests.
+
+'date-consistency/no-new-date-with-lib': ['warn', { banNativeDate: true, checkStaticMethods: true }]
+// ⚠ Avoid ad-hoc 'Date.now()'. Centralize date creation (e.g. in a clock helper) so it can be mocked in tests.
+```
+
+Use `nativeLibs` to treat your own native-Date-based utilities the same way date-fns is treated:
+
+```js
+'date-consistency/no-new-date-with-lib': ['warn', {
+  libs: ['dayjs', 'my-internal-date-utils'],
+  nativeLibs: ['my-internal-date-utils'],
+}]
+```
+
+When both a wrapper library and a native-Date library are imported in the same file, the wrapper behavior wins — the wrapper's object makes `new Date()` an inconsistency again.
 
 #### Recipes
 
@@ -351,7 +413,9 @@ export default [
 ];
 ```
 
-### date-fns project — strict
+### date-fns project
+
+Idiomatic `new Date()` stays allowed; unreliable string parsing (`new Date('...')`, `Date.parse()`) is flagged automatically:
 
 ```js
 import dateConsistency from 'eslint-plugin-date-consistency';
@@ -362,13 +426,23 @@ export default [
     rules: {
       'date-consistency/no-new-date-with-lib': ['error', {
         libs: ['date-fns'],
-        checkStaticMethods: true,
         ignorePatterns: ['**/*.test.*'],
       }],
       'date-consistency/no-deprecated-date-lib': 'error',
     },
   },
 ];
+```
+
+To also forbid ad-hoc date creation (centralize it in a mockable clock helper), add `banNativeDate: true`. Add `checkStaticMethods: true` too if you also want `Date.now()`/`Date.UTC()` covered, not just `new Date()`:
+
+```js
+'date-consistency/no-new-date-with-lib': ['error', {
+  libs: ['date-fns'],
+  banNativeDate: true,
+  checkStaticMethods: true,
+  ignorePatterns: ['**/*.test.*'],
+}],
 ```
 
 ### Migrating away from Moment.js

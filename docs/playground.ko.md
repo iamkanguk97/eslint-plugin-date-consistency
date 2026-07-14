@@ -85,7 +85,7 @@ Playground는 `eslint-plugin-date-consistency` 규칙을 브라우저에서 바�
 | 버튼 | 시연 내용 |
 |------|----------|
 | **dayjs** | `import dayjs` + `new Date()` → `noNewDate` 경고 |
-| **date-fns** | `import { format } from 'date-fns'` + `new Date()` → 경고 |
+| **date-fns** | 인자 없는 `new Date()`는 허용(date-fns 관용구), `new Date('...')` / `Date.parse()` → 파싱 경고 |
 | **moment (deprecated)** | `import moment from 'moment'` → `deprecatedLib` 경고 |
 | **banNativeDate** | 라이브러리 import 없이 `new Date()` 사용 → 경고 (banNativeDate + checkStaticMethods 활성화) |
 | **checkStaticMethods** | dayjs와 함께 `Date.now()`, `Date.UTC()` 사용 → 경고 |

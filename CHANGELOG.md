@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-14
+
+### Changed
+- `no-new-date-with-lib`: date-fns is now treated as a **native-Date library**. Files importing date-fns no longer flag idiomatic `new Date()` / `Date.now()` / `Date.UTC()`; instead the rule flags unreliable string parsing — `new Date(string)` and `Date.parse()` (the latter regardless of `checkStaticMethods`, since it carries the same risk) — and suggests `parseISO()`. A multi-argument call like `new Date('2024', 0, 1)` is the numeric year/month/day constructor, not string parsing, and is not flagged. Use `banNativeDate: true` to also forbid ad-hoc `new Date()` in date-fns files (add `checkStaticMethods: true` too if you want `Date.now()`/`Date.UTC()` covered as well) — the warning then suggests centralizing date creation in a mockable clock helper
+- `no-new-date-with-lib`: warning messages now include a concrete replacement per wrapper library (`dayjs()`, `moment()`, `DateTime.now()`); custom libraries keep the generic wording. When the flagged `new Date(...)`/`Date.{{method}}(...)` call has arguments, the message no longer suggests a bare no-arg replacement (which would silently drop the arguments) — it asks for an equivalent call that preserves them instead
+- `no-new-date-with-lib`: when both a wrapper library (e.g. dayjs) and a native-Date library are imported in the same file, the wrapper behavior takes precedence
+- Playground: linter mirror and the date-fns preset example updated to match the new behavior; the mirror and the rule now share a parity fixture suite (`fixtures/date-lib-parity.ts`) so the two can't silently drift apart
+- CI now also installs and tests the playground package
+
+### Added
+- New messages `unreliableParsing` (string-parsing traps), `centralizeCreation` (`banNativeDate: true` with a native-Date library), `noNewDateWithArgs`, and `noStaticDateWithArgs` (argument-preserving wrapper-lib guidance) in `no-new-date-with-lib`
+- `nativeLibs` option for `no-new-date-with-lib` — lets you treat your own native-Date-based utilities the same way date-fns is treated (default: `['date-fns']`)
+- Playground now has its own test suite (`playground/tests/`), including the parity fixtures shared with the main rule's tests
+
+### Fixed
+- `no-new-date-with-lib`: a multi-argument `new Date(...)` call whose first argument happens to be a string (e.g. `new Date('2024', 0, 1)`) was misclassified as unreliable string parsing for native-Date libraries; only a single string/template-literal argument is treated as a parse call now
+
 ## [1.0.4] - 2026-05-20
 
 ### Fixed

@@ -44,6 +44,59 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
       `,
     },
 
+    // date-fns는 네이티브 Date 기반 라이브러리 — 인자 없는 new Date()는 관용구
+    {
+      code: `
+        import { format } from 'date-fns';
+        const now = new Date();
+        const formatted = format(now, 'yyyy-MM-dd');
+      `,
+    },
+
+    // date-fns + 서브패스 import — 마찬가지로 허용
+    {
+      code: `
+        import { format } from 'date-fns/format';
+        const d = new Date();
+      `,
+    },
+
+    // date-fns + 타임스탬프/연월일 생성자 — 문자열 파싱이 아니므로 허용
+    {
+      code: `
+        import { addDays } from 'date-fns';
+        const a = new Date(1720000000000);
+        const b = new Date(2024, 0, 1);
+      `,
+    },
+
+    // date-fns + 다중 인자 생성자의 첫 인자가 문자열이어도 파싱 호출이 아니므로 허용
+    // (new Date(year, month, ...) 형태 — new Date(string) 단일 인자 파싱과 다름)
+    {
+      code: `
+        import { addDays } from 'date-fns';
+        const d = new Date('2024', 0, 1);
+      `,
+    },
+
+    // date-fns + Date.now() — checkStaticMethods여도 파싱 함정이 아니므로 허용
+    {
+      code: `
+        import { format } from 'date-fns';
+        const ts = Date.now();
+      `,
+      options: [{ checkStaticMethods: true }],
+    },
+
+    // date-fns + allowAsArgument: true — 인수로 전달된 문자열 파싱은 옵션 존중
+    {
+      code: `
+        import { format } from 'date-fns';
+        const d = format(new Date('2024-01-01'), 'yyyy-MM-dd');
+      `,
+      options: [{ allowAsArgument: true }],
+    },
+
     // instanceof Date — BinaryExpression이라 감지 안 됨
     {
       code: `
@@ -132,34 +185,157 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
       `,
       options: [{ ignorePatterns: ['**/*.test.*', '**/*.spec.*'] }],
     },
+
+    // nativeLibs: 사용자 정의 native-Date 라이브러리 — 인자 없는 new Date()는 관용구로 허용
+    {
+      code: `
+        import { formatDate } from 'my-native-date-utils';
+        const now = new Date();
+      `,
+      options: [{ libs: ['my-native-date-utils'], nativeLibs: ['my-native-date-utils'] }],
+    },
   ],
 
   invalid: [
-    // 기본: dayjs import + new Date()
+    // 기본: dayjs import + new Date() — 구체적 대체 표현 포함
     {
       code: `
         import dayjs from 'dayjs';
         const d = new Date();
       `,
-      errors: [{ messageId: 'noNewDate' }],
+      errors: [
+        {
+          messageId: 'noNewDate',
+          data: { detectedLib: 'dayjs', replacement: "'dayjs()'" },
+        },
+      ],
     },
 
-    // named import
+    // named import (래퍼 라이브러리)
     {
       code: `
-        import { format } from 'date-fns';
+        import { DateTime } from 'luxon';
         const d = new Date();
       `,
-      errors: [{ messageId: 'noNewDate' }],
+      errors: [
+        {
+          messageId: 'noNewDate',
+          data: { detectedLib: 'luxon', replacement: "'DateTime.now()'" },
+        },
+      ],
     },
 
     // 서브패스 import
     {
       code: `
-        import { format } from 'date-fns/format';
+        import utc from 'dayjs/plugin/utc';
         const d = new Date();
       `,
       errors: [{ messageId: 'noNewDate' }],
+    },
+
+    // date-fns + new Date(문자열) — 파싱 함정으로 경고
+    {
+      code: `
+        import { format } from 'date-fns';
+        const d = new Date('2024-01-01');
+      `,
+      errors: [
+        {
+          messageId: 'unreliableParsing',
+          data: {
+            construct: 'new Date(string)',
+            alternative: "'parseISO()' from date-fns",
+          },
+        },
+      ],
+    },
+
+    // date-fns + new Date(템플릿 리터럴) — 문자열 파싱으로 취급
+    {
+      code: `
+        import { format } from 'date-fns';
+        const d = new Date(\`2024-01-\${day}\`);
+      `,
+      errors: [{ messageId: 'unreliableParsing' }],
+    },
+
+    // date-fns + Date.parse() — checkStaticMethods 없이도 경고 (new Date(string)와 동일한 파싱 함정)
+    {
+      code: `
+        import { format } from 'date-fns';
+        const ts = Date.parse('2024-01-01');
+      `,
+      errors: [
+        {
+          messageId: 'unreliableParsing',
+          data: {
+            construct: 'Date.parse()',
+            alternative: "'parseISO()' from date-fns",
+          },
+        },
+      ],
+    },
+
+    // date-fns + banNativeDate: true — 인자 없는 new Date()도 중앙화 안내로 경고
+    {
+      code: `
+        import { format } from 'date-fns';
+        const now = new Date();
+      `,
+      options: [{ banNativeDate: true }],
+      errors: [
+        {
+          messageId: 'centralizeCreation',
+          data: { construct: 'new Date()' },
+        },
+      ],
+    },
+
+    // date-fns + banNativeDate + checkStaticMethods — Date.now()도 중앙화 안내
+    {
+      code: `
+        import { format } from 'date-fns';
+        const ts = Date.now();
+      `,
+      options: [{ banNativeDate: true, checkStaticMethods: true }],
+      errors: [
+        {
+          messageId: 'centralizeCreation',
+          data: { construct: 'Date.now()' },
+        },
+      ],
+    },
+
+    // 래퍼(dayjs)와 date-fns를 함께 import — 래퍼 기준으로 경고 (NewExpression)
+    {
+      code: `
+        import dayjs from 'dayjs';
+        import { format } from 'date-fns';
+        const d = new Date();
+      `,
+      errors: [
+        {
+          messageId: 'noNewDate',
+          data: { detectedLib: 'dayjs', replacement: "'dayjs()'" },
+        },
+      ],
+    },
+
+    // 래퍼(dayjs)와 date-fns를 함께 import — 래퍼 기준으로 경고 (MemberExpression, 우선순위 대칭 테스트)
+    {
+      code: `
+        import dayjs from 'dayjs';
+        import { format } from 'date-fns';
+        const ts = Date.parse('2024-01-01');
+      `,
+      options: [{ checkStaticMethods: true }],
+      errors: [
+        {
+          messageId: 'noStaticDateWithArgs',
+          data: { detectedLib: 'dayjs', method: 'parse' },
+        },
+      ],
     },
 
     // CJS require
@@ -172,13 +348,18 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
       errors: [{ messageId: 'noNewDate' }],
     },
 
-    // new Date(인수 있음)
+    // new Date(인수 있음) — 인자를 무시하는 'dayjs()' 대신 인자 보존 안내
     {
       code: `
         import dayjs from 'dayjs';
         const d = new Date('2024-01-01');
       `,
-      errors: [{ messageId: 'noNewDate' }],
+      errors: [
+        {
+          messageId: 'noNewDateWithArgs',
+          data: { detectedLib: 'dayjs' },
+        },
+      ],
     },
 
     // 함수 내부
@@ -208,27 +389,42 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
         const ts = Date.now();
       `,
       options: [{ checkStaticMethods: true }],
-      errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'now' } }],
+      errors: [
+        {
+          messageId: 'noStaticDate',
+          data: { detectedLib: 'dayjs', method: 'now', replacement: "'dayjs()'" },
+        },
+      ],
     },
 
-    // Date.parse() — checkStaticMethods: true
+    // Date.parse() — checkStaticMethods: true, 인자가 있으므로 인자 보존 안내
     {
       code: `
         import dayjs from 'dayjs';
         const ts = Date.parse('2024-01-01');
       `,
       options: [{ checkStaticMethods: true }],
-      errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'parse' } }],
+      errors: [
+        {
+          messageId: 'noStaticDateWithArgs',
+          data: { detectedLib: 'dayjs', method: 'parse' },
+        },
+      ],
     },
 
-    // Date.UTC() — checkStaticMethods: true
+    // Date.UTC() — checkStaticMethods: true, 인자가 있으므로 인자 보존 안내
     {
       code: `
         import dayjs from 'dayjs';
         const ts = Date.UTC(2024, 0, 1);
       `,
       options: [{ checkStaticMethods: true }],
-      errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'UTC' } }],
+      errors: [
+        {
+          messageId: 'noStaticDateWithArgs',
+          data: { detectedLib: 'dayjs', method: 'UTC' },
+        },
+      ],
     },
 
     // banNativeDate: true + allowAsArgument: true — standalone new Date() is still flagged
@@ -245,26 +441,59 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
         const ts = Date.now();
       `,
       options: [{ checkStaticMethods: true, allowAsArgument: true }],
-      errors: [{ messageId: 'noStaticDate', data: { detectedLib: 'dayjs', method: 'now' } }],
+      errors: [
+        {
+          messageId: 'noStaticDate',
+          data: { detectedLib: 'dayjs', method: 'now', replacement: "'dayjs()'" },
+        },
+      ],
     },
 
-    // 커스텀 libs 설정
+    // 커스텀 libs 설정 — 대체 표현을 모르는 라이브러리는 'it'으로 안내
     {
       code: `
         import myDate from 'my-date-lib';
         const d = new Date();
       `,
       options: [{ libs: ['my-date-lib'] }],
-      errors: [{ messageId: 'noNewDate' }],
+      errors: [
+        {
+          messageId: 'noNewDate',
+          data: { detectedLib: 'my-date-lib', replacement: 'it' },
+        },
+      ],
     },
 
-    // luxon
+    // moment (래퍼)
     {
       code: `
-        import { DateTime } from 'luxon';
+        import moment from 'moment';
         const d = new Date();
       `,
-      errors: [{ messageId: 'noNewDate' }],
+      errors: [
+        {
+          messageId: 'noNewDate',
+          data: { detectedLib: 'moment', replacement: "'moment()'" },
+        },
+      ],
+    },
+
+    // nativeLibs: 사용자 정의 native-Date 라이브러리 — 문자열 파싱은 여전히 경고
+    {
+      code: `
+        import { formatDate } from 'my-native-date-utils';
+        const d = new Date('2024-01-01');
+      `,
+      options: [{ libs: ['my-native-date-utils'], nativeLibs: ['my-native-date-utils'] }],
+      errors: [
+        {
+          messageId: 'unreliableParsing',
+          data: {
+            construct: 'new Date(string)',
+            alternative: 'a dedicated parsing function',
+          },
+        },
+      ],
     },
 
     // ignorePatterns 설정이 있어도 패턴 밖의 파일은 여전히 경고
