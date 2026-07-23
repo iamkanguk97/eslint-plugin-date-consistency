@@ -52,7 +52,7 @@
     "@typescript-eslint/parser": "^8.59.4",
     "@typescript-eslint/rule-tester": "^8.59.4",
     "eslint": "^10.4.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.6"
   },
   "dependencies": {
