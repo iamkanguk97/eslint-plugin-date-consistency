@@ -42,6 +42,8 @@ const d = dayjs();
 
 This plugin catches these issues at lint time, before they reach code review or production.
 
+> **Deeper dive:** [Why Avoid `new Date()`?](./docs/why-avoid-new-date.md) — the specific footguns behind the advice (string parsing, the system clock, 0-indexed months, mutability) and how each rule maps to them.
+
 ---
 
 ## Rules
