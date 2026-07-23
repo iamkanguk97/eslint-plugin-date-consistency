@@ -8,9 +8,14 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          monaco: ['@monaco-editor/react'],
+        // vite 8 uses rolldown, which requires manualChunks to be a function
+        // (the object form is no longer supported). Preserves the original
+        // vendor / monaco split.
+        manualChunks(id) {
+          if (id.includes('/node_modules/@monaco-editor/')) return 'monaco';
+          if (id.includes('/node_modules/react') || id.includes('/node_modules/scheduler')) {
+            return 'vendor';
+          }
         },
       },
     },
