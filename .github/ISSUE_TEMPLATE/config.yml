@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/iamkanguk97/eslint-plugin-date-consistency#readme
+    about: Read the README for rules, options, and configuration recipes.
+  - name: Try it in the Playground
+    url: https://iamkanguk97.github.io/eslint-plugin-date-consistency/
+    about: Reproduce the behavior interactively before filing an issue.
