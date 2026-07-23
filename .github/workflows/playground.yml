@@ -20,7 +20,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: cd playground && npm install
+        run: cd playground && npm ci
 
       - name: Build
         run: cd playground && npm run build
