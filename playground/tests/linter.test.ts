@@ -12,6 +12,13 @@ describe('lint — no-deprecated-date-lib', () => {
     );
   });
 
+  it('flags a deprecated library imported via require() (parity with the real rule)', () => {
+    const messages = lint(`const moment = require('moment');`, {});
+    expect(messages[0].message).toBe(
+      "'moment' is in maintenance mode. Consider migrating to dayjs or date-fns.",
+    );
+  });
+
   it('does not flag a non-deprecated library', () => {
     expect(lint(`import dayjs from 'dayjs';`, {})).toEqual([]);
   });
