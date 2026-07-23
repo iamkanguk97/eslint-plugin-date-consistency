@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+# OIDC trusted publishing (and provenance) require id-token: write.
+# No long-lived npm token is stored.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing requires npm >= 11.5.1, newer than the npm bundled
+      # with Node 20.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Guard: never publish a version that doesn't match the release tag.
+      # The tag is passed via env (not interpolated into the script) to avoid
+      # any command-injection risk from the tag name.
+      - name: Verify the release tag matches package.json
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error::Release tag ($TAG) does not match package.json version ($PKG_VERSION)."
+            exit 1
+          fi
+          echo "Version check OK: $TAG"
+
+      # prepublishOnly (npm run build && npm test) runs automatically here, so
+      # a failing build or test aborts the publish.
+      - name: Publish to npm
+        run: npm publish --provenance --access public

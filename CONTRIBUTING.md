@@ -165,6 +165,12 @@ reports **zero** vulnerabilities. Dependabot watches both the root and
 `playground/` dependencies and will open PRs as clean upgrades land, so these
 are picked up over time rather than forced through breaking major bumps.
 
+## Releasing
+
+Maintainers: see [RELEASING.md](./RELEASING.md) for the automated npm release
+process — publishing is triggered by a GitHub Release and uses OIDC trusted
+publishing with build provenance.
+
 ## Reporting Issues
 
 Please open a GitHub issue with:
