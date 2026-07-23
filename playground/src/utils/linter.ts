@@ -121,6 +121,22 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
     }
   }
 
+  // Mirror of no-deprecated-date-lib's checkSource — flags a deprecated lib
+  // imported via either `import` or `require()`. (The require path used to be
+  // missed here, so require('moment') diverged from the real rule.)
+  function checkDeprecated(pkg: string, node: Node): void {
+    if (!deprecated.includes(pkg)) return;
+    const alt = alternatives[pkg] ?? null;
+    messages.push({
+      ruleId: 'date-consistency/no-deprecated-date-lib',
+      message: alt
+        ? `'${pkg}' is in maintenance mode. Consider migrating to ${alt}.`
+        : `'${pkg}' is in maintenance mode. Consider using an actively maintained date library.`,
+      severity: 1,
+      ...loc(node),
+    });
+  }
+
   // Pass 1: collect imports + check deprecated libs
   walk(ast as Node, {
     ImportDeclaration(node) {
@@ -128,17 +144,7 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
       const source = n.source.value as string;
       const pkg = normalizePackageName(source);
       registerLib(pkg);
-      if (deprecated.includes(pkg)) {
-        const alt = alternatives[pkg] ?? null;
-        messages.push({
-          ruleId: 'date-consistency/no-deprecated-date-lib',
-          message: alt
-            ? `'${pkg}' is in maintenance mode. Consider migrating to ${alt}.`
-            : `'${pkg}' is in maintenance mode. Consider using an actively maintained date library.`,
-          severity: 1,
-          ...loc(node),
-        });
-      }
+      checkDeprecated(pkg, node);
     },
     CallExpression(node) {
       const n = node as unknown as acorn.CallExpression;
@@ -152,6 +158,7 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
         const source = (n.arguments[0] as acorn.Literal).value as string;
         const pkg = normalizePackageName(source);
         registerLib(pkg);
+        checkDeprecated(pkg, node);
       }
     },
   });
