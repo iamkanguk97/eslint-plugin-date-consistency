@@ -147,6 +147,24 @@ fix: handle require() with destructuring assignment
 docs: add luxon examples to README
 ```
 
+## Security & `npm audit`
+
+Running `npm audit` inside `playground/` reports a few advisories. All of them
+live in **development-only or CDN-loaded transitive dependencies** and do **not**
+affect the published npm package or visitors to the deployed playground:
+
+- **DOMPurify** (transitive, via `monaco-editor`) — Monaco is loaded from a CDN
+  at runtime, so its bundled DOMPurify is not part of the playground build, and
+  Monaco only uses it to sanitize editor hover/markdown content (there is no
+  attacker-controlled HTML in this playground).
+- **esbuild / vite** — these are dev-server-only advisories; they do not affect
+  the static site that is built and deployed to GitHub Pages.
+
+The published plugin itself is clean: `npm audit --omit=dev` at the repo root
+reports **zero** vulnerabilities. Dependabot watches both the root and
+`playground/` dependencies and will open PRs as clean upgrades land, so these
+are picked up over time rather than forced through breaking major bumps.
+
 ## Reporting Issues
 
 Please open a GitHub issue with:
