@@ -19,11 +19,12 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          # Trusted publishing requires Node >= 22.14.0.
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
 
-      # Trusted publishing requires npm >= 11.5.1, newer than the npm bundled
-      # with Node 20.
+      # Trusted publishing also requires npm >= 11.5.1, newer than the npm
+      # bundled with Node 22.
       - name: Update npm
         run: npm install -g npm@latest
 
