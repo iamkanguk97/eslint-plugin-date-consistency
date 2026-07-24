@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-24
+
+### Added
+- New rule `no-mixed-date-libs` — enforces a single date library. With no options it flags a file that imports more than one watched date library (the first import wins; each later, different library is reported once). With `preferred` set, it flags any library other than the preferred one wherever it is imported, giving a per-file way to enforce one library across the whole project. Options: `libs` (default `['dayjs', 'date-fns', 'moment', 'luxon']`) and `preferred`
+- Playground: `no-mixed-date-libs` is mirrored in the linter, exposed via a `preferred` selector and a `no-mixed-date-libs` example, and covered by a shared parity fixture suite (`fixtures/mixed-lib-parity.ts`)
+- README: a "How this compares to other date ESLint plugins" section clarifying where this plugin's context-aware approach differs from the alternatives
+
+### Note
+- `no-mixed-date-libs` is **not** part of the `recommended` config — it is opt-in. `recommended` intentionally tolerates a wrapper library (e.g. dayjs) coexisting with a native-Date library (date-fns) in one file, which `no-new-date-with-lib` already handles; enable `no-mixed-date-libs` explicitly when you want strict single-library enforcement
+
 ## [1.1.0] - 2026-07-14
 
 ### Changed

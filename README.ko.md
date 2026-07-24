@@ -52,6 +52,22 @@ const d = dayjs();
 |------|------|:----:|
 | [`no-new-date-with-lib`](#date-consistencyno-new-date-with-lib) | 날짜 라이브러리가 임포트된 파일에서 `new Date()` 사용을 경고 | ✅ |
 | [`no-deprecated-date-lib`](#date-consistencyno-deprecated-date-lib) | 더 이상 유지보수되지 않는 라이브러리 임포트를 경고 (예: Moment.js) | ✅ |
+| [`no-mixed-date-libs`](#date-consistencyno-mixed-date-libs) | 두 개 이상의 날짜 라이브러리 혼용을 경고 (opt-in) | — |
+
+---
+
+## 다른 날짜 ESLint 플러그인과의 비교
+
+날짜 처리를 다루는 플러그인은 여럿 있습니다. 이 플러그인의 차별점은 **문맥 인지(context-aware)** 방식이라는 점입니다. `no-new-date-with-lib`는 **날짜 라이브러리를 이미 임포트한 파일에서만** `new Date()`를 경고하고, 그 라이브러리에 맞춘 메시지(`dayjs()`, `DateTime.now()` 등)를 제공하며, 래퍼형 라이브러리와 date-fns 같은 네이티브 `Date` 라이브러리를 구분합니다. 대부분의 다른 플러그인은 `new Date()`를 조건 없이 경고하거나, 특정 라이브러리 하나만 억제합니다.
+
+| 플러그인 | 초점 | 이 플러그인과의 차이 |
+|----------|------|---------------------|
+| [`eslint-plugin-you-dont-need-momentjs`](https://github.com/you-dont-need/You-Dont-Need-Momentjs) | Moment.js 함수별 대체 제안 | Moment 마이그레이션에 특화. `new Date()` vs 임포트된 라이브러리를 따지지 않음. `no-deprecated-date-lib`와만 겹침 |
+| [`eslint-plugin-no-date-parsing`](https://github.com/amzn/eslint-plugin-no-date-parsing) | `new Date(string)` / `Date.parse` 문자열 파싱 | 임포트와 무관하게 항상 경고. 이 플러그인은 같은 함정을 (의미가 있는) 네이티브 `Date` 라이브러리에서만 `no-new-date-with-lib`의 일부로 경고 |
+| `eslint-plugin-no-new-date`, `eslint-plugin-disallow-date` | `new Date()` 전면 금지 | 라이브러리 인지 없는 일괄 금지 — 이 플러그인의 opt-in `banNativeDate: true`와 동등 |
+| [`eslint-plugin-date`](https://www.npmjs.com/package/eslint-plugin-date) | `no-new-date-with-args`, `no-moment-dayjs` | 가장 가까운 사촌이나 여전히 조건 없이 경고. 래퍼/네이티브 구분이나 라이브러리별 메시지가 없음 |
+
+**이 플러그인이 맞는 경우:** 날짜 라이브러리를 이미 도입했고, 그 선택을 기준으로 일관성을 강제하고 싶을 때 — `no-mixed-date-libs`로 두 번째 라이브러리가 끼어드는 것까지 막습니다. **일괄 금지 플러그인이 맞는 경우:** 파일이 어떤 라이브러리를 쓰는지와 무관하게 그냥 `new Date()`를 전면 금지하고 싶을 때입니다.
 
 ---
 
@@ -393,6 +409,84 @@ import { DateTime } from 'luxon';
 
 ---
 
+### `date-consistency/no-mixed-date-libs`
+
+두 개 이상의 날짜 라이브러리를 임포트하는 파일을 경고하여 **단일 날짜 라이브러리**를 강제합니다. `no-new-date-with-lib`가 네이티브 `Date`와의 혼용을 막는다면, 이 규칙은 *두 번째* 라이브러리가 첫 번째와 섞이는 것을 막는 짝입니다.
+
+> **opt-in:** 이 규칙은 `recommended` 설정에 **포함되지 않습니다**. 엄격한 단일 라이브러리 강제가 필요할 때 명시적으로 활성화하세요.
+
+```
+'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.
+```
+
+#### 옵션
+
+```js
+'date-consistency/no-mixed-date-libs': ['warn', {
+  libs: ['dayjs', 'date-fns', 'moment', 'luxon'], // 기본값
+  preferred: undefined,                            // 기본값 (선호 라이브러리 지정 없음)
+}]
+```
+
+| 옵션 | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `libs` | `string[]` | `['dayjs', 'date-fns', 'moment', 'luxon']` | 상호 배타적으로 취급할 날짜 라이브러리 목록. 서브패스 임포트와 스코프 패키지를 지원합니다. |
+| `preferred` | `string` | `undefined` | 허용되는 단일 라이브러리. 지정하면 `libs` 중 다른 라이브러리는 임포트되는 곳마다 경고됩니다 — 해당 파일에 선호 라이브러리가 없더라도 마찬가지입니다. 지정하지 않으면 한 파일에서 처음 임포트된 라이브러리가 기준이 되고, 그와 다른 라이브러리가 경고됩니다. |
+
+#### 두 가지 모드
+
+**기본 — `preferred` 없음:** 한 파일에서 처음 임포트된 감시 대상 라이브러리가 기준이 되고, 같은 파일의 *다른* 감시 대상 라이브러리를 (첫 임포트 위치에서 한 번) 경고합니다.
+
+```js
+import dayjs from 'dayjs';
+import { DateTime } from 'luxon'; // ⚠ 'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.
+```
+
+**`preferred` 지정 — 프로젝트 전역 단일 라이브러리:** ESLint는 모든 파일을 검사하므로, 선호 라이브러리를 고정하면 코드베이스 전체에서 파일 단위로 다른 라이브러리를 경고합니다.
+
+```js
+// options: { preferred: 'dayjs' }
+import { DateTime } from 'luxon'; // ⚠ 'luxon' is not the preferred date library ('dayjs'). Use 'dayjs' consistently.
+```
+
+#### 허용되는 경우
+
+```js
+// 라이브러리 하나만 사용 — 허용
+import dayjs from 'dayjs';
+
+// 같은 라이브러리를 서브패스로 여러 번 사용하는 것은 "혼용"이 아님
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'; // ok
+
+// 타입 전용 임포트는 사용으로 치지 않음
+import dayjs from 'dayjs';
+import type { DateTime } from 'luxon'; // ok
+
+// 설정된 libs 목록 밖의 라이브러리는 무시
+// options: { libs: ['dayjs'] }
+import dayjs from 'dayjs';
+import { DateTime } from 'luxon'; // ok — luxon은 감시 대상이 아님
+```
+
+#### 사용 예시
+
+**프로젝트 전역에서 단일 라이브러리 강제**
+
+```js
+'date-consistency/no-mixed-date-libs': ['error', { preferred: 'dayjs' }]
+```
+
+**특정 목록 안에서만 혼용 금지**
+
+```js
+'date-consistency/no-mixed-date-libs': ['warn', { libs: ['dayjs', 'luxon', 'moment'] }]
+```
+
+> **참고:** `no-new-date-with-lib`과 마찬가지로, 파일 내 CJS `require()` 감지는 순서에 민감합니다(ESLint의 단일 패스 방문자). `require()`를 파일 상단에 두면(표준 관행) 이 문제를 피할 수 있습니다. ESM `import`는 항상 호이스팅되므로 영향받지 않습니다.
+
+---
+
 ## 공통 설정 예시
 
 ### dayjs 프로젝트 — 권장 시작점
@@ -464,6 +558,24 @@ export default [
       'date-consistency/no-new-date-with-lib': ['warn', {
         libs: ['dayjs'],
       }],
+    },
+  },
+];
+```
+
+### 단일 날짜 라이브러리 강제
+
+`no-mixed-date-libs`에 `preferred` 라이브러리를 지정하면 코드베이스 어디서든 두 번째 날짜 라이브러리가 끼어드는 것을 막을 수 있습니다:
+
+```js
+import dateConsistency from 'eslint-plugin-date-consistency';
+
+export default [
+  {
+    plugins: { 'date-consistency': dateConsistency },
+    rules: {
+      'date-consistency/no-new-date-with-lib': ['warn', { libs: ['dayjs'] }],
+      'date-consistency/no-mixed-date-libs': ['error', { preferred: 'dayjs' }],
     },
   },
 ];
