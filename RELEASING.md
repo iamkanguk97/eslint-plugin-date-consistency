@@ -7,21 +7,23 @@ release is published with build **provenance**.
 
 ## One-time setup (required before the first automated release)
 
+The publishing runner needs **npm >= 11.5.1** and **Node >= 22.14.0**. The
+release workflow already satisfies this (Node 22 + `npm install -g npm@latest`).
+The package must already exist on npm — it does, so no manual first publish is
+needed.
+
 Configure npm trusted publishing for the package:
 
 1. Sign in at <https://www.npmjs.com> and open the package page for
-   `eslint-plugin-date-consistency` → **Settings**.
-2. Under **Publishing access → Trusted Publisher**, add a GitHub Actions
-   publisher with:
+   `eslint-plugin-date-consistency` → **Settings** → **Trusted Publishing**.
+2. Under **Select your publisher**, choose **GitHub Actions** and fill in the
+   fields (they are case-sensitive and must match exactly):
    - **Organization or user:** `iamkanguk97`
    - **Repository:** `eslint-plugin-date-consistency`
-   - **Workflow filename:** `release.yml`
-   - **Environment:** leave blank (none is used)
+   - **Workflow filename:** `release.yml` (filename only, not a path)
+   - **Environment name:** leave blank (none is used)
+   - **Allowed actions:** select **npm publish**
 3. Save.
-
-> If the package has never been published before, run the first `npm publish`
-> manually so the package exists on npm, then configure the trusted publisher
-> for all subsequent automated releases.
 
 ## Cutting a release
 
