@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Playground](https://img.shields.io/badge/Try%20it%20online-Playground-7c6af7)](https://iamkanguk97.github.io/eslint-plugin-date-consistency/)
 
-An ESLint plugin that enforces consistent date handling — preventing accidental use of the native `Date` object when a date library is already in use, and flagging deprecated libraries like Moment.js.
+An ESLint plugin that enforces consistent date handling — preventing accidental use of the native `Date` object when a date library is already in use, keeping a second date library from creeping in, and flagging deprecated libraries like Moment.js.
 
 ## Playground
 
@@ -432,7 +432,7 @@ Enforces a **single date library** by flagging files that pull in more than one.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `libs` | `string[]` | `['dayjs', 'date-fns', 'moment', 'luxon']` | Date libraries treated as mutually exclusive. Supports subpath imports and scoped packages. |
-| `preferred` | `string` | `undefined` | The single allowed library. When set, any other library in `libs` is flagged wherever it is imported — even if the preferred one is absent from that file. When unset, the first library imported in a file wins and any different one is flagged. |
+| `preferred` | `string` | `undefined` | The single allowed library. When set, any other library in `libs` is flagged wherever it is imported — even if the preferred one is absent from that file. When unset, the first library imported in a file wins and any different one is flagged. Set it to one of the `libs` entries; if it is not in `libs`, no import can ever match it and every watched library is flagged. |
 
 #### Two modes
 

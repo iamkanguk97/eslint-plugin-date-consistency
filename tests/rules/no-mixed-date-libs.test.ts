@@ -54,6 +54,11 @@ ruleTester.run('no-mixed-date-libs', noMixedDateLibs, {
       code: `import dayjs from 'dayjs';\nimport utc from 'dayjs/plugin/utc';`,
       options: [{ preferred: 'dayjs' }],
     },
+
+    // bare side-effect import + 같은 라이브러리 서브패스 — 혼용 아님
+    {
+      code: `import 'dayjs';\nimport 'dayjs/plugin/utc';`,
+    },
   ],
 
   invalid: [
@@ -138,6 +143,51 @@ ruleTester.run('no-mixed-date-libs', noMixedDateLibs, {
       code: `import dayjs from 'dayjs';\nimport { type DateTime, Duration } from 'luxon';`,
       errors: [
         { messageId: 'mixedLibs', data: { lib: 'luxon', chosen: 'dayjs' } },
+      ],
+    },
+
+    // default 바인딩 + 인라인 type specifier — default가 런타임 바인딩이므로 감지
+    {
+      code: `import dayjs from 'dayjs';\nimport DateTime, { type Duration } from 'luxon';`,
+      errors: [
+        { messageId: 'mixedLibs', data: { lib: 'luxon', chosen: 'dayjs' } },
+      ],
+    },
+
+    // namespace import도 런타임 바인딩이므로 혼용으로 감지
+    {
+      code: `import * as luxon from 'luxon';\nimport dayjs from 'dayjs';`,
+      errors: [
+        { messageId: 'mixedLibs', data: { lib: 'dayjs', chosen: 'luxon' } },
+      ],
+    },
+
+    // bare side-effect import도 런타임 import이므로 chosenLib가 되어 혼용을 감지
+    {
+      code: `import 'dayjs';\nimport { DateTime } from 'luxon';`,
+      errors: [
+        { messageId: 'mixedLibs', data: { lib: 'luxon', chosen: 'dayjs' } },
+      ],
+    },
+
+    // 같은 라이브러리를 import와 require로 중복 참조해도 chosenLib는 한 번만 —
+    // 뒤이은 다른 라이브러리만 경고
+    {
+      code: `import dayjs from 'dayjs';\nconst d = require('dayjs');\nimport { DateTime } from 'luxon';`,
+      errors: [
+        { messageId: 'mixedLibs', data: { lib: 'luxon', chosen: 'dayjs' } },
+      ],
+    },
+
+    // preferred 모드 — 같은 비선호 라이브러리를 여러 번 import해도 한 번만 경고
+    {
+      code: `import { DateTime } from 'luxon';\nimport { Duration } from 'luxon';`,
+      options: [{ preferred: 'dayjs' }],
+      errors: [
+        {
+          messageId: 'nonPreferredLib',
+          data: { lib: 'luxon', preferred: 'dayjs' },
+        },
       ],
     },
   ],
