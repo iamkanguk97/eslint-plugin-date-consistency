@@ -17,6 +17,7 @@ export interface PluginOptions {
   checkStaticMethods?: boolean;
   banNativeDate?: boolean;
   deprecated?: string[];
+  preferred?: string;
 }
 
 const DEFAULT_LIBS = ['dayjs', 'date-fns', 'moment', 'luxon'];
@@ -106,6 +107,7 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
   const banNativeDate = options.banNativeDate ?? false;
   const deprecated = options.deprecated ?? DEFAULT_DEPRECATED;
   const alternatives = { ...DEFAULT_ALTERNATIVES };
+  const preferred = options.preferred;
 
   // A wrapper lib takes precedence over a native-Date lib when both are
   // imported — mirrors the real rule.
@@ -137,7 +139,45 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
     });
   }
 
-  // Pass 1: collect imports + check deprecated libs
+  // Mirror of no-mixed-date-libs — flags a file that imports more than one
+  // date library, or (with `preferred` set) any library other than the
+  // preferred one. The first watched library seen becomes the "chosen" one;
+  // each conflicting package is reported once, at its first import site.
+  let chosenLib: string | null = null;
+  const reportedMixed = new Set<string>();
+
+  function checkMixed(pkg: string, node: Node): void {
+    if (!libs.includes(pkg)) return;
+
+    if (preferred != null) {
+      if (pkg === preferred) return;
+      if (reportedMixed.has(pkg)) return;
+      reportedMixed.add(pkg);
+      messages.push({
+        ruleId: 'date-consistency/no-mixed-date-libs',
+        message: `'${pkg}' is not the preferred date library ('${preferred}'). Use '${preferred}' consistently.`,
+        severity: 1,
+        ...loc(node),
+      });
+      return;
+    }
+
+    if (chosenLib === null) {
+      chosenLib = pkg;
+      return;
+    }
+    if (pkg === chosenLib) return;
+    if (reportedMixed.has(pkg)) return;
+    reportedMixed.add(pkg);
+    messages.push({
+      ruleId: 'date-consistency/no-mixed-date-libs',
+      message: `'${pkg}' is mixed with '${chosenLib}' in the same file. Stick to a single date library for consistency.`,
+      severity: 1,
+      ...loc(node),
+    });
+  }
+
+  // Pass 1: collect imports + check deprecated / mixed libs
   walk(ast as Node, {
     ImportDeclaration(node) {
       const n = node as unknown as acorn.ImportDeclaration;
@@ -145,6 +185,7 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
       const pkg = normalizePackageName(source);
       registerLib(pkg);
       checkDeprecated(pkg, node);
+      checkMixed(pkg, node);
     },
     CallExpression(node) {
       const n = node as unknown as acorn.CallExpression;
@@ -159,6 +200,7 @@ export function lint(code: string, options: PluginOptions): LintMessage[] {
         const pkg = normalizePackageName(source);
         registerLib(pkg);
         checkDeprecated(pkg, node);
+        checkMixed(pkg, node);
       }
     },
   });

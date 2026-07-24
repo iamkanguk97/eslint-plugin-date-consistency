@@ -22,6 +22,10 @@ export default function OptionsPanel({ options, onChange }: Props) {
     onChange({ ...options, libs: next });
   }
 
+  function setPreferred(value: string) {
+    onChange({ ...options, preferred: value || undefined });
+  }
+
   return (
     <div className="options-panel">
       <div className="options-section">
@@ -66,6 +70,26 @@ export default function OptionsPanel({ options, onChange }: Props) {
               <span>{lib}</span>
             </label>
           ))}
+        </div>
+      </div>
+      <div className="options-section">
+        <span className="options-label">no-mixed-date-libs options</span>
+        <div className="options-row">
+          <label className="option-toggle">
+            <span>preferred</span>
+            <select
+              className="option-select"
+              value={options.preferred ?? ''}
+              onChange={(e) => setPreferred(e.target.value)}
+            >
+              <option value="">(none — flag any mixing)</option>
+              {libs.map((lib) => (
+                <option key={lib} value={lib}>
+                  {lib}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
     </div>

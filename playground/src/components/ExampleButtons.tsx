@@ -41,6 +41,17 @@ const now = moment().format('YYYY-MM-DD');
     options: {},
   },
   {
+    label: 'no-mixed-date-libs',
+    code: `import dayjs from 'dayjs';
+// ⚠ mixing a second date library in the same file
+import { DateTime } from 'luxon';
+
+const a = dayjs();
+const b = DateTime.now();
+`,
+    options: {},
+  },
+  {
     label: 'banNativeDate',
     code: `// ⚠ new Date() is banned even without a date library
 const now = new Date();
