@@ -19,7 +19,15 @@ export default function OptionsPanel({ options, onChange }: Props) {
     const next = current.includes(lib)
       ? current.filter((l) => l !== lib)
       : [...current, lib];
-    onChange({ ...options, libs: next });
+    // Keep `preferred` in sync: if its library is no longer watched, the
+    // <select> would drop that <option> and show "(none)" while `preferred`
+    // still held the removed lib. Clear it so the UI and the enforced option
+    // can't drift apart.
+    const preferred =
+      options.preferred && next.includes(options.preferred)
+        ? options.preferred
+        : undefined;
+    onChange({ ...options, libs: next, preferred });
   }
 
   function setPreferred(value: string) {

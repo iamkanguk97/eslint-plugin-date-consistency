@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Playground: clear the `no-mixed-date-libs` `preferred` selection when its library is unchecked from `libs`, so the selector no longer shows "(none)" while the option is still enforced
+
+### Documentation
+- README: add single-library enforcement to the top-of-README summary, and note that `preferred` should be one of the `libs` entries (otherwise no import matches it and every watched library is flagged)
+
 ## [1.2.0] - 2026-07-24
 
 ### Added

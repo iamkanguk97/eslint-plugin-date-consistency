@@ -94,4 +94,42 @@ export const MIXED_LIB_FIXTURES: MixedLibFixture[] = [
     options: { preferred: 'dayjs' },
     expected: [],
   },
+  {
+    name: 'bare side-effect import — a real runtime import, so mixing is flagged',
+    code: `import 'dayjs';\nimport { DateTime } from 'luxon';`,
+    expected: [
+      "'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.",
+    ],
+  },
+  {
+    name: 'namespace import — a real binding, so mixing is flagged',
+    code: `import * as luxon from 'luxon';\nimport dayjs from 'dayjs';`,
+    expected: [
+      "'dayjs' is mixed with 'luxon' in the same file. Stick to a single date library for consistency.",
+    ],
+  },
+  {
+    name: 'scoped-package name — normalized to @scope/name on both sides',
+    code: `import dayjs from 'dayjs';\nimport { LocalDate } from '@js-joda/core';`,
+    options: { libs: ['dayjs', '@js-joda/core'] },
+    expected: [
+      "'@js-joda/core' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.",
+    ],
+  },
+  {
+    name: 'preferred not in libs — no import matches it, so every watched library is flagged',
+    code: `import dayjs from 'dayjs';\nimport { DateTime } from 'luxon';`,
+    options: { libs: ['dayjs', 'luxon'], preferred: 'moment' },
+    expected: [
+      "'dayjs' is not the preferred date library ('moment'). Use 'moment' consistently.",
+      "'luxon' is not the preferred date library ('moment'). Use 'moment' consistently.",
+    ],
+  },
+  {
+    name: 'CJS require with subpath — dedup and mixing detected together',
+    code: `const dayjs = require('dayjs');\nconst utc = require('dayjs/plugin/utc');\nconst { DateTime } = require('luxon');`,
+    expected: [
+      "'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.",
+    ],
+  },
 ];
