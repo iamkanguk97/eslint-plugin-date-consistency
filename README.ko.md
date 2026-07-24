@@ -415,7 +415,7 @@ import { DateTime } from 'luxon';
 
 > **opt-in:** 이 규칙은 `recommended` 설정에 **포함되지 않습니다**. 엄격한 단일 라이브러리 강제가 필요할 때 명시적으로 활성화하세요.
 
-```
+```text
 'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.
 ```
 

@@ -140,11 +140,13 @@ relate to native `Date`:
 A team that consistently uses only native `Date` is a legitimate user of this
 plugin as well — the goal is one consistent approach, not the elimination of `Date`.
 
-Consistency also breaks when two *libraries* coexist — dayjs in one module,
-Luxon in another — since each has its own parsing, mutability, and timezone
-rules. The opt-in `no-mixed-date-libs` rule extends the same principle to that
-case: it flags a file that imports more than one date library, or (with
-`preferred` set) any library other than the one you standardized on.
+Consistency also breaks when two *libraries* creep in — each has its own
+parsing, mutability, and timezone rules. The opt-in `no-mixed-date-libs` rule
+extends the same principle to that case. By default it flags a single file that
+imports more than one date library (it is file-scoped, like every ESLint rule —
+it does not compare imports across files). To enforce one library across the
+whole project, file by file, set `preferred` to the library you standardized on;
+any other library in `libs` is then flagged wherever it is imported.
 
 ---
 

@@ -32,6 +32,17 @@ ruleTester.run('no-mixed-date-libs', noMixedDateLibs, {
       code: `import dayjs from 'dayjs';\nimport type { DateTime } from 'luxon';`,
     },
 
+    // 인라인 type-only specifier도 런타임 import가 아니므로 허용
+    // (선언 자체의 importKind는 'value'로 남는다)
+    {
+      code: `import dayjs from 'dayjs';\nimport { type DateTime } from 'luxon';`,
+    },
+
+    // 인라인 type-only가 먼저 와도 chosenLib를 오염시키지 않음
+    {
+      code: `import { type DateTime } from 'luxon';\nimport dayjs from 'dayjs';`,
+    },
+
     // 커스텀 libs 목록 — 목록 밖 라이브러리는 무시 (luxon은 감시 대상 아님)
     {
       code: `import dayjs from 'dayjs';\nimport { DateTime } from 'luxon';`,
@@ -117,6 +128,14 @@ ruleTester.run('no-mixed-date-libs', noMixedDateLibs, {
     {
       code: `import dayjs from 'dayjs';\nimport { DateTime } from 'luxon';`,
       options: [{ libs: ['dayjs', 'luxon'] }],
+      errors: [
+        { messageId: 'mixedLibs', data: { lib: 'luxon', chosen: 'dayjs' } },
+      ],
+    },
+
+    // 인라인 type과 value가 섞인 import는 런타임 import이므로 혼용으로 감지
+    {
+      code: `import dayjs from 'dayjs';\nimport { type DateTime, Duration } from 'luxon';`,
       errors: [
         { messageId: 'mixedLibs', data: { lib: 'luxon', chosen: 'dayjs' } },
       ],

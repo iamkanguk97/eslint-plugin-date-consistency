@@ -416,7 +416,7 @@ Enforces a **single date library** by flagging files that pull in more than one.
 
 > **Opt-in:** this rule is **not** part of the `recommended` config. Enable it explicitly when you want strict single-library enforcement.
 
-```
+```text
 'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.
 ```
 

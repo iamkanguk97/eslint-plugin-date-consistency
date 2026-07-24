@@ -13,6 +13,25 @@ type Options = [
 
 type MessageIds = 'mixedLibs' | 'nonPreferredLib';
 
+// A declaration is type-only either at the declaration level
+// (`import type { X } from '...'`) or when every named specifier is an inline
+// type import (`import { type X } from '...'`) — the latter leaves the
+// declaration's own importKind as 'value'. Both forms are erased at compile
+// time, so they add no runtime dependency on the library. A default/namespace
+// binding or a bare side-effect import (`import '...'`) is a real runtime
+// import and must not be skipped.
+function isTypeOnlyImport(node: TSESTree.ImportDeclaration): boolean {
+  if (node.importKind === 'type') return true;
+  return (
+    node.specifiers.length > 0 &&
+    node.specifiers.every(
+      (specifier) =>
+        specifier.type === 'ImportSpecifier' &&
+        specifier.importKind === 'type',
+    )
+  );
+}
+
 export const noMixedDateLibs = createRule<Options, MessageIds>({
   name: 'no-mixed-date-libs',
   meta: {
@@ -92,7 +111,7 @@ export const noMixedDateLibs = createRule<Options, MessageIds>({
 
     return {
       ImportDeclaration(node) {
-        if (node.importKind === 'type') return;
+        if (isTypeOnlyImport(node)) return;
         checkSource(node.source.value, node);
       },
 
