@@ -130,6 +130,16 @@ body {
   cursor: pointer;
 }
 
+.option-select {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
 /* ── Main Area ── */
 .main-area {
   flex: 1;

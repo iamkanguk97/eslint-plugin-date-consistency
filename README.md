@@ -52,6 +52,22 @@ This plugin catches these issues at lint time, before they reach code review or 
 |------|-------------|:-----------:|
 | [`no-new-date-with-lib`](#date-consistencyno-new-date-with-lib) | Flags `new Date()` when a date library is imported | ✅ |
 | [`no-deprecated-date-lib`](#date-consistencyno-deprecated-date-lib) | Flags imports of deprecated libraries (e.g. Moment.js) | ✅ |
+| [`no-mixed-date-libs`](#date-consistencyno-mixed-date-libs) | Flags mixing more than one date library (opt-in) | — |
+
+---
+
+## How this compares to other date ESLint plugins
+
+Several plugins touch date handling. What makes this one different is that it is **context-aware**: `no-new-date-with-lib` flags `new Date()` **only in files that already import a date library**, and tailors the message to that library (`dayjs()`, `DateTime.now()`, …), distinguishing wrapper libraries from native-`Date` libraries like date-fns. Most alternatives flag `new Date()` unconditionally, or discourage one specific library.
+
+| Plugin | Focus | How it differs from this plugin |
+|--------|-------|---------------------------------|
+| [`eslint-plugin-you-dont-need-momentjs`](https://github.com/you-dont-need/You-Dont-Need-Momentjs) | Per-function Moment.js replacements | Deep on Moment migration; doesn't reason about `new Date()` vs. an imported library. Overlaps `no-deprecated-date-lib` only |
+| [`eslint-plugin-no-date-parsing`](https://github.com/amzn/eslint-plugin-no-date-parsing) | `new Date(string)` / `Date.parse` string-parsing | Always flags, regardless of imports. This plugin flags the same trap but only for native-`Date` libraries (where it matters), as part of `no-new-date-with-lib` |
+| `eslint-plugin-no-new-date`, `eslint-plugin-disallow-date` | Ban `new Date()` everywhere | Blanket ban with no library awareness — equivalent to this plugin's opt-in `banNativeDate: true` |
+| [`eslint-plugin-date`](https://www.npmjs.com/package/eslint-plugin-date) | `no-new-date-with-args`, `no-moment-dayjs` | Closest sibling, but still flags unconditionally; no wrapper-vs-native distinction or per-library messages |
+
+**Use this plugin when** you have adopted a date library and want consistency enforced *relative to that choice* — including, via `no-mixed-date-libs`, forbidding a second library from creeping in. **Reach for a blanket plugin instead** if you simply want to ban `new Date()` outright with no notion of which library a file uses.
 
 ---
 
@@ -394,6 +410,84 @@ import { DateTime } from 'luxon';
 
 ---
 
+### `date-consistency/no-mixed-date-libs`
+
+Enforces a **single date library** by flagging files that pull in more than one. This is the counterpart to `no-new-date-with-lib`: that rule keeps native `Date` from mixing with your library, and this one keeps a *second* library from mixing with your first.
+
+> **Opt-in:** this rule is **not** part of the `recommended` config. Enable it explicitly when you want strict single-library enforcement.
+
+```text
+'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.
+```
+
+#### Options
+
+```js
+'date-consistency/no-mixed-date-libs': ['warn', {
+  libs: ['dayjs', 'date-fns', 'moment', 'luxon'], // default
+  preferred: undefined,                            // default (no single preferred library)
+}]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `libs` | `string[]` | `['dayjs', 'date-fns', 'moment', 'luxon']` | Date libraries treated as mutually exclusive. Supports subpath imports and scoped packages. |
+| `preferred` | `string` | `undefined` | The single allowed library. When set, any other library in `libs` is flagged wherever it is imported — even if the preferred one is absent from that file. When unset, the first library imported in a file wins and any different one is flagged. |
+
+#### Two modes
+
+**Default — no `preferred`:** the first watched library imported in a file becomes the chosen one; any *different* watched library in the same file is flagged (once, at its first import).
+
+```js
+import dayjs from 'dayjs';
+import { DateTime } from 'luxon'; // ⚠ 'luxon' is mixed with 'dayjs' in the same file. Stick to a single date library for consistency.
+```
+
+**With `preferred` — project-wide single library:** because ESLint checks every file, pinning a preferred library flags any other library across the whole codebase, file by file.
+
+```js
+// options: { preferred: 'dayjs' }
+import { DateTime } from 'luxon'; // ⚠ 'luxon' is not the preferred date library ('dayjs'). Use 'dayjs' consistently.
+```
+
+#### What is allowed
+
+```js
+// A single library — fine
+import dayjs from 'dayjs';
+
+// The same library over multiple subpaths is not "mixing"
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'; // ok
+
+// type-only imports don't count as usage
+import dayjs from 'dayjs';
+import type { DateTime } from 'luxon'; // ok
+
+// A library outside the configured `libs` list is ignored
+// options: { libs: ['dayjs'] }
+import dayjs from 'dayjs';
+import { DateTime } from 'luxon'; // ok — luxon isn't watched
+```
+
+#### Recipes
+
+**Enforce a single library project-wide**
+
+```js
+'date-consistency/no-mixed-date-libs': ['error', { preferred: 'dayjs' }]
+```
+
+**Only forbid mixing among a specific set**
+
+```js
+'date-consistency/no-mixed-date-libs': ['warn', { libs: ['dayjs', 'luxon', 'moment'] }]
+```
+
+> **Note:** like `no-new-date-with-lib`, CJS `require()` detection is order-sensitive within a file (ESLint's single-pass visitor). Keeping `require()` calls at the top of the file — standard practice — avoids this. ESM `import`s are always hoisted, so they are unaffected.
+
+---
+
 ## Common Configurations
 
 ### dayjs project — recommended starting point
@@ -465,6 +559,24 @@ export default [
       'date-consistency/no-new-date-with-lib': ['warn', {
         libs: ['dayjs'],
       }],
+    },
+  },
+];
+```
+
+### Enforce a single date library
+
+Add `no-mixed-date-libs` with a `preferred` library to keep a second date library from creeping in anywhere in the codebase:
+
+```js
+import dateConsistency from 'eslint-plugin-date-consistency';
+
+export default [
+  {
+    plugins: { 'date-consistency': dateConsistency },
+    rules: {
+      'date-consistency/no-new-date-with-lib': ['warn', { libs: ['dayjs'] }],
+      'date-consistency/no-mixed-date-libs': ['error', { preferred: 'dayjs' }],
     },
   },
 ];
