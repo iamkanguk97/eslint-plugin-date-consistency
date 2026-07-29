@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
-    "acorn": "^8.16.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-date-consistency": "file:..",
+    "esquery": "^1.7.0",
     "monaco-editor": "^0.56.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

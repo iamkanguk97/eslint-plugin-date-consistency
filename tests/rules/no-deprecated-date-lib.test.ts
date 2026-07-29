@@ -25,6 +25,10 @@ ruleTester.run('no-deprecated-date-lib', noDeprecatedDateLib, {
     // type-only import는 허용
     { code: `import type { Moment } from 'moment';` },
 
+    // 인라인 type-only specifier도 런타임 import가 아니므로 허용
+    // (선언 자체의 importKind는 'value'로 남는다)
+    { code: `import { type Moment } from 'moment';` },
+
     // 커스텀 deprecated 목록 — moment가 목록에 없으면 허용
     {
       code: `import moment from 'moment';`,
@@ -42,6 +46,12 @@ ruleTester.run('no-deprecated-date-lib', noDeprecatedDateLib, {
     // named import도 동일하게 감지
     {
       code: `import { utc } from 'moment';`,
+      errors: [{ messageId: 'deprecatedLib', data: { lib: 'moment', alternative: 'dayjs or date-fns' } }],
+    },
+
+    // 인라인 type과 value가 섞인 import는 런타임 import이므로 감지
+    {
+      code: `import { type Moment, utc } from 'moment';`,
       errors: [{ messageId: 'deprecatedLib', data: { lib: 'moment', alternative: 'dayjs or date-fns' } }],
     },
 

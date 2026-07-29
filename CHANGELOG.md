@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Playground: the acorn-based mirror implementation is replaced by the **real plugin rules** running in the browser via ESLint's `eslint/universal` Linter. Playground results now match the published package exactly — CJS `require()` ordering and `eslint-disable` directive comments behave like real ESLint — and rule changes no longer need a manual mirror sync
+- `createRule` deep-imports `RuleCreator` from `@typescript-eslint/utils/eslint-utils` instead of the package barrel, cutting a runtime `require('eslint')` chain (lighter Node loads, and makes the plugin browser-bundleable)
+- Internal: the three rules share `require()` detection, type-only-import handling, and the default watched-library list via `src/utils/matchers.ts` instead of per-rule copies
+
 ### Fixed
+- `no-new-date-with-lib` / `no-deprecated-date-lib`: inline type-only imports (`import { type Dayjs } from 'dayjs'`) are no longer treated as runtime imports — consistent with `no-mixed-date-libs` and with the existing skip of declaration-level `import type`
+- Playground: unparsable code now surfaces the parse error (synthetic `parse-error` rule id, rendered as an error marker) instead of showing an empty "No issues found" panel
 - Playground: clear the `no-mixed-date-libs` `preferred` selection when its library is unchecked from `libs`, so the selector no longer shows "(none)" while the option is still enforced
+
+### Added
+- Guard test asserting `plugin.meta.version`/`name` stay in sync with `package.json`, so publishing with a stale hardcoded plugin version fails `prepublishOnly`
+
+### Removed
+- Playground: dead browser stubs (`playground/src/stubs/`) left over from an earlier attempt at bundling ESLint
 
 ### Documentation
 - README: add single-library enforcement to the top-of-README summary, and note that `preferred` should be one of the `libs` entries (otherwise no import matches it and every watched library is flagged)

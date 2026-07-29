@@ -1,9 +1,11 @@
-// Shared parity fixtures for the `no-mixed-date-libs` ESLint rule and its
-// playground mirror (playground/src/utils/linter.ts). Both implementations
-// must produce the exact `expected` message text for the same `code` and
-// `options`, so a change to either side without the other fails a test here.
+// Shared parity fixtures for the `no-mixed-date-libs` ESLint rule. They run
+// twice: against the rule from source (tests/rules/no-mixed-date-libs.parity.test.ts)
+// and through the playground's lint() wrapper (playground/tests/), which lints
+// with the built package via eslint/universal. Both runs must produce the
+// exact `expected` message text, locking messages in and catching a broken
+// dist build or playground wiring.
 //
-// The playground mirror is acorn-based and cannot parse TypeScript-only syntax
+// Both runs parse with espree, which cannot parse TypeScript-only syntax
 // (e.g. `import type`), so fixtures here stay to plain JS. TS-specific cases
 // (type-only imports) live in the RuleTester test instead.
 

@@ -3,12 +3,13 @@ import { lint } from '../src/utils/linter';
 import { PARITY_FIXTURES } from '../../fixtures/date-lib-parity';
 
 // Runs the same fixtures as tests/rules/no-new-date-with-lib.parity.test.ts
-// against the playground's acorn-based mirror, so a change on either side
-// that isn't mirrored on the other fails a test instead of silently diverging.
+// through the playground's lint() wrapper, which lints with the built package
+// (dist/) via eslint/universal — catching a broken build or wiring that the
+// source-level rule tests can't see.
 //
-// The mirror runs every rule at once, so messages are filtered to this rule's
-// id — a fixture that imports two libraries would otherwise also surface a
-// no-mixed-date-libs message, which is covered by its own parity suite.
+// The playground runs every rule at once, so messages are filtered to this
+// rule's id — a fixture that imports two libraries would otherwise also
+// surface a no-mixed-date-libs message, which is covered by its own suite.
 describe('linter — rule parity fixtures', () => {
   for (const fixture of PARITY_FIXTURES) {
     it(fixture.name, () => {

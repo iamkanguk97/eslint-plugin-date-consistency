@@ -3,9 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { noNewDateWithLib } from '../../src/rules/no-new-date-with-lib';
 import { PARITY_FIXTURES } from '../../fixtures/date-lib-parity';
 
-// Runs the same fixtures as playground/tests/linter.test.ts against the real
-// ESLint rule, so a change on either side that isn't mirrored on the other
-// fails a test instead of silently diverging.
+// Runs the shared fixtures against the rule from source with ESLint's Linter
+// (espree parser), locking the exact message text. The playground suite
+// (playground/tests/linter.parity.test.ts) runs the same fixtures against
+// the built package, so the two catch different failure modes.
 describe('no-new-date-with-lib — playground parity fixtures', () => {
   const linter = new Linter();
 

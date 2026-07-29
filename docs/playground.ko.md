@@ -180,17 +180,15 @@ import moment from 'moment';
 | 제한사항 | 상세 내용 |
 |---------|----------|
 | JavaScript만 지원 | TypeScript 문법은 지원되지 않습니다. 순수 `.js` 스타일 코드를 사용하세요. |
-| `require()` 순서 문제 없음 | 실제 플러그인에서는 `new Date()` 이후에 `require()`가 오면 감지하지 못하는 한계가 있습니다. Playground는 2-pass 분석으로 이를 해결하므로 CJS 패턴에서 결과가 약간 다를 수 있습니다. |
 | `ignorePatterns` 미지원 | `ignorePatterns` 옵션은 파일 경로가 필요하므로 Playground UI에 노출되지 않습니다. |
-| `eslint-disable` 주석 미지원 | ESLint 비활성화 디렉티브는 처리되지 않아 모든 경고가 표시됩니다. |
 
 ---
 
 ## 실제 플러그인과의 차이점
 
-Playground는 경량 JavaScript AST 파서인 [acorn](https://github.com/acornjs/acorn)을 사용하여 브라우저에서 직접 규칙 로직을 실행합니다. 실제 `eslint` 바이너리나 npm 패키지를 실행하지 않습니다. 규칙 로직은 동일하지만 사소한 차이가 있습니다:
+Playground는 ESLint의 브라우저 호환 `Linter`(`eslint/universal`)를 통해 **실제 플러그인 규칙을 그대로** 브라우저에서 실행하며, ESLint가 JavaScript에 사용하는 것과 동일한 espree 파서로 코드를 파싱합니다. 파싱 가능한 코드에 한해 린트 결과, 메시지, 엣지 케이스 동작(CJS `require()` 순서, `eslint-disable` 디렉티브 주석 포함)이 배포된 npm 패키지와 정확히 일치합니다.
 
-- **2-pass 분석**: Playground는 `new Date()` 검사 전에 모든 import를 먼저 수집하여, 실제 플러그인의 CJS 순서 제한 문제를 해결합니다.
-- **JavaScript 전용**: 실제 플러그인은 `@typescript-eslint/parser`를 통해 TypeScript 파일도 지원하지만 Playground는 지원하지 않습니다.
+남아 있는 차이점 두 가지:
 
-배포된 패키지와 정확히 동일한 동작을 확인하려면 플러그인을 로컬에 설치하여 ESLint를 직접 실행하세요.
+- **JavaScript 전용**: 실제 플러그인은 `@typescript-eslint/parser`를 통해 TypeScript 파일도 지원하지만, Playground의 espree 파서는 TypeScript 문법을 파싱하지 못합니다.
+- **노출되는 옵션**: `ignorePatterns` 옵션은 Playground UI에서 사용할 수 없습니다(위 제한사항 표 참고).
