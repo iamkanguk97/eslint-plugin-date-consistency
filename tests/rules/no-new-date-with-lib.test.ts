@@ -44,6 +44,15 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
       `,
     },
 
+    // 인라인 type-only specifier도 런타임 import가 아니므로 허용
+    // (선언 자체의 importKind는 'value'로 남는다)
+    {
+      code: `
+        import { type Dayjs } from 'dayjs';
+        const d = new Date();
+      `,
+    },
+
     // date-fns는 네이티브 Date 기반 라이브러리 — 인자 없는 new Date()는 관용구
     {
       code: `
@@ -221,6 +230,20 @@ ruleTester.run('no-new-date-with-lib', noNewDateWithLib, {
         {
           messageId: 'noNewDate',
           data: { detectedLib: 'luxon', replacement: "'DateTime.now()'" },
+        },
+      ],
+    },
+
+    // 인라인 type과 value가 섞인 import는 런타임 import이므로 감지
+    {
+      code: `
+        import { type Dayjs, isDayjs } from 'dayjs';
+        const d = new Date();
+      `,
+      errors: [
+        {
+          messageId: 'noNewDate',
+          data: { detectedLib: 'dayjs', replacement: "'dayjs()'" },
         },
       ],
     },

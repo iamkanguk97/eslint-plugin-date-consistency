@@ -1,6 +1,10 @@
 import { TSESTree } from '@typescript-eslint/utils';
 import { createRule } from '../utils/create-rule';
-import { normalizePackageName } from '../utils/matchers';
+import {
+  getRequireSource,
+  isTypeOnlyImport,
+  normalizePackageName,
+} from '../utils/matchers';
 
 const DEFAULT_DEPRECATED = ['moment'];
 const DEFAULT_ALTERNATIVES: Record<string, string> = {
@@ -67,20 +71,13 @@ export const noDeprecatedDateLib = createRule<Options, MessageIds>({
 
     return {
       ImportDeclaration(node) {
-        if (node.importKind === 'type') return;
+        if (isTypeOnlyImport(node)) return;
         checkSource(node.source.value, node);
       },
 
       CallExpression(node) {
-        if (
-          node.callee.type === 'Identifier' &&
-          node.callee.name === 'require' &&
-          node.arguments.length === 1 &&
-          node.arguments[0].type === 'Literal' &&
-          typeof node.arguments[0].value === 'string'
-        ) {
-          checkSource(node.arguments[0].value, node);
-        }
+        const source = getRequireSource(node);
+        if (source !== null) checkSource(source, node);
       },
     };
   },

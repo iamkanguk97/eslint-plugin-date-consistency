@@ -1,9 +1,13 @@
 import { TSESTree } from '@typescript-eslint/utils';
 import { minimatch } from 'minimatch';
 import { createRule } from '../utils/create-rule';
-import { isDateLibImport, normalizePackageName } from '../utils/matchers';
-
-const DEFAULT_DATE_LIBS = ['dayjs', 'date-fns', 'moment', 'luxon'];
+import {
+  DEFAULT_DATE_LIBS,
+  getRequireSource,
+  isDateLibImport,
+  isTypeOnlyImport,
+  normalizePackageName,
+} from '../utils/matchers';
 
 // Wrapper libraries replace native Date with their own object, so any
 // new Date() is an inconsistency. The map value is the concrete
@@ -24,6 +28,36 @@ const PARSE_ALTERNATIVES: Record<string, string> = {
 };
 
 const STATIC_METHODS = ['now', 'parse', 'UTC'];
+
+function wrapperReplacement(lib: string): string {
+  return WRAPPER_REPLACEMENTS[lib] ?? 'it';
+}
+
+function parseAlternative(lib: string): string {
+  return PARSE_ALTERNATIVES[lib] ?? 'a dedicated parsing function';
+}
+
+// Only a single string/template-literal argument is a parse call
+// (new Date(string)); with more arguments, the first one is a numeric
+// date component (new Date(year, month, ...)), not a parsed string.
+function isUnreliableParseCall(args: readonly TSESTree.CallExpressionArgument[]): boolean {
+  if (args.length !== 1) return false;
+  const [arg] = args;
+  if (arg.type === 'Literal') return typeof arg.value === 'string';
+  return arg.type === 'TemplateLiteral';
+}
+
+// Returns true when node is passed as an argument to any function call.
+// Used by allowAsArgument to permit new Date() inside calls like dayjs(new Date()).
+function isInsideAnyFunctionCall(node: TSESTree.Node): boolean {
+  const parent = node.parent;
+  return (
+    parent?.type === 'CallExpression' &&
+    parent.arguments.some((arg) => arg === node) &&
+    (parent.callee.type === 'Identifier' ||
+      parent.callee.type === 'MemberExpression')
+  );
+}
 
 type Options = [
   {
@@ -143,55 +177,15 @@ export const noNewDateWithLib = createRule<Options, MessageIds>({
       }
     }
 
-    function wrapperReplacement(lib: string): string {
-      return WRAPPER_REPLACEMENTS[lib] ?? 'it';
-    }
-
-    function parseAlternative(lib: string): string {
-      return PARSE_ALTERNATIVES[lib] ?? 'a dedicated parsing function';
-    }
-
-    // Only a single string/template-literal argument is a parse call
-    // (new Date(string)); with more arguments, the first one is a numeric
-    // date component (new Date(year, month, ...)), not a parsed string.
-    function isUnreliableParseCall(args: readonly TSESTree.CallExpressionArgument[]): boolean {
-      if (args.length !== 1) return false;
-      const [arg] = args;
-      if (arg.type === 'Literal') return typeof arg.value === 'string';
-      return arg.type === 'TemplateLiteral';
-    }
-
-    // Returns true when node is passed as an argument to any function call.
-    // Used by allowAsArgument to permit new Date() inside calls like dayjs(new Date()).
-    function isInsideAnyFunctionCall(node: TSESTree.Node): boolean {
-      const parent = node.parent;
-      if (
-        parent?.type === 'CallExpression' &&
-        parent.arguments.some((arg) => arg === node)
-      ) {
-        const callee = parent.callee;
-        if (callee.type === 'Identifier') return true;
-        if (callee.type === 'MemberExpression') return true;
-      }
-      return false;
-    }
-
     return {
       ImportDeclaration(node) {
-        if (node.importKind === 'type') return;
+        if (isTypeOnlyImport(node)) return;
         checkImportSource(node.source.value);
       },
 
       CallExpression(node) {
-        if (
-          node.callee.type === 'Identifier' &&
-          node.callee.name === 'require' &&
-          node.arguments.length === 1 &&
-          node.arguments[0].type === 'Literal' &&
-          typeof node.arguments[0].value === 'string'
-        ) {
-          checkImportSource(node.arguments[0].value);
-        }
+        const source = getRequireSource(node);
+        if (source !== null) checkImportSource(source);
       },
 
       NewExpression(node) {
