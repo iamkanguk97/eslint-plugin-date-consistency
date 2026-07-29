@@ -5,7 +5,7 @@ import { noNewDateWithLib } from './rules/no-new-date-with-lib';
 const plugin = {
   meta: {
     name: 'eslint-plugin-date-consistency',
-    version: '1.2.0',
+    version: '1.2.1',
   },
   rules: {
     'no-new-date-with-lib': noNewDateWithLib,

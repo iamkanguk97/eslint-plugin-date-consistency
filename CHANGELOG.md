@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-29
+
 ### Changed
 - Playground: the acorn-based mirror implementation is replaced by the **real plugin rules** running in the browser via ESLint's `eslint/universal` Linter. Playground results now match the published package exactly — CJS `require()` ordering and `eslint-disable` directive comments behave like real ESLint — and rule changes no longer need a manual mirror sync
 - `createRule` deep-imports `RuleCreator` from `@typescript-eslint/utils/eslint-utils` instead of the package barrel, cutting a runtime `require('eslint')` chain (lighter Node loads, and makes the plugin browser-bundleable)
