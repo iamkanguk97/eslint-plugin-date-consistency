@@ -186,8 +186,9 @@ import moment from 'moment';
 
 ## 실제 플러그인과의 차이점
 
-Playground는 ESLint의 브라우저 호환 `Linter`(`eslint/universal`)를 통해 **실제 플러그인 규칙을 그대로** 브라우저에서 실행하며, ESLint가 JavaScript에 사용하는 것과 동일한 espree 파서로 코드를 파싱합니다. 린트 결과, 메시지, 엣지 케이스 동작(CJS `require()` 순서, `eslint-disable` 디렉티브 주석 포함)이 배포된 npm 패키지와 정확히 일치합니다.
+Playground는 ESLint의 브라우저 호환 `Linter`(`eslint/universal`)를 통해 **실제 플러그인 규칙을 그대로** 브라우저에서 실행하며, ESLint가 JavaScript에 사용하는 것과 동일한 espree 파서로 코드를 파싱합니다. 파싱 가능한 코드에 한해 린트 결과, 메시지, 엣지 케이스 동작(CJS `require()` 순서, `eslint-disable` 디렉티브 주석 포함)이 배포된 npm 패키지와 정확히 일치합니다.
 
-남아 있는 유일한 차이점:
+남아 있는 차이점 두 가지:
 
 - **JavaScript 전용**: 실제 플러그인은 `@typescript-eslint/parser`를 통해 TypeScript 파일도 지원하지만, Playground의 espree 파서는 TypeScript 문법을 파싱하지 못합니다.
+- **노출되는 옵션**: `ignorePatterns` 옵션은 Playground UI에서 사용할 수 없습니다(위 제한사항 표 참고).

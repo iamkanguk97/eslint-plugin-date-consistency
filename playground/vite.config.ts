@@ -28,10 +28,16 @@ export default defineConfig({
           }
           // eslint/universal and its parser stack (espree → acorn) are the
           // largest non-monaco dependency; keep them out of the app chunk.
+          // Packages are matched with a trailing slash so the prefix cannot
+          // swallow unrelated eslint-* packages (e.g. this plugin itself,
+          // when it is resolved through node_modules rather than a symlink).
           if (
-            id.includes('/node_modules/eslint') ||
-            id.includes('/node_modules/espree') ||
-            id.includes('/node_modules/acorn')
+            id.includes('/node_modules/eslint/') ||
+            id.includes('/node_modules/@eslint/') ||
+            id.includes('/node_modules/eslint-scope/') ||
+            id.includes('/node_modules/eslint-visitor-keys/') ||
+            id.includes('/node_modules/espree/') ||
+            id.includes('/node_modules/acorn') // acorn + acorn-jsx
           ) {
             return 'eslint';
           }

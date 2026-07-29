@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `no-new-date-with-lib` / `no-deprecated-date-lib`: inline type-only imports (`import { type Dayjs } from 'dayjs'`) are no longer treated as runtime imports — consistent with `no-mixed-date-libs` and with the existing skip of declaration-level `import type`
+- Playground: unparsable code now surfaces the parse error (synthetic `parse-error` rule id, rendered as an error marker) instead of showing an empty "No issues found" panel
 - Playground: clear the `no-mixed-date-libs` `preferred` selection when its library is unchecked from `libs`, so the selector no longer shows "(none)" while the option is still enforced
 
 ### Added

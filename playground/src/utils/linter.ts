@@ -41,7 +41,7 @@ function verify(
   sourceType: 'module' | 'script',
 ): Linter.LintMessage[] {
   return linter.verify(code, {
-    languageOptions: { ecmaVersion: 2022, sourceType },
+    languageOptions: { ecmaVersion: 'latest', sourceType },
     // @typescript-eslint/utils' RuleCreator output is structurally stricter
     // than eslint's own Rule.RuleModule type, but is the same shape ESLint
     // uses at runtime (same cast as tests/rules/*.parity.test.ts).
@@ -73,12 +73,31 @@ function verify(
 
 export function lint(code: string, options: PluginOptions): LintMessage[] {
   // Parse as ESM first and fall back to script for CJS snippets — the same
-  // order the previous acorn-based implementation used. A parse error shows
-  // up as a single fatal message with a null ruleId, which the filter below
-  // drops, so code that fails both parses yields [].
-  let messages = verify(code, options, 'module');
-  if (messages.some((m) => m.fatal)) {
+  // order the previous acorn-based implementation used.
+  const moduleMessages = verify(code, options, 'module');
+  const moduleFatal = moduleMessages.find((m) => m.fatal);
+  let messages = moduleMessages;
+  if (moduleFatal) {
     messages = verify(code, options, 'script');
+    if (messages.some((m) => m.fatal)) {
+      // Both parses failed: surface the parse error under a synthetic rule id
+      // instead of returning [] — otherwise unparsable input is
+      // indistinguishable from clean input in the UI. The module-pass error
+      // is the one reported because it points at the actual typo in
+      // ESM-style snippets, while the script pass usually trips earlier on
+      // the `import` statement itself.
+      return [
+        {
+          ruleId: 'parse-error',
+          message: moduleFatal.message,
+          line: moduleFatal.line ?? 1,
+          column: moduleFatal.column ?? 1,
+          endLine: moduleFatal.endLine,
+          endColumn: moduleFatal.endColumn,
+          severity: 2,
+        },
+      ];
+    }
   }
 
   return messages

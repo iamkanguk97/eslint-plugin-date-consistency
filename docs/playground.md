@@ -184,14 +184,15 @@ import moment from 'moment';
 
 ---
 
-## Difference from the Real Plugin
+## Differences from the Real Plugin
 
 The Playground runs the **actual plugin rules** in the browser through ESLint's
 bundler-friendly `Linter` (`eslint/universal`), parsing with espree — the same
-parser ESLint uses for JavaScript. Lint results, messages, and edge-case
-behavior (including CJS `require()` ordering and `eslint-disable` directive
-comments) match the published npm package exactly.
+parser ESLint uses for JavaScript. For the code it can parse, lint results,
+messages, and edge-case behavior (including CJS `require()` ordering and
+`eslint-disable` directive comments) match the published npm package exactly.
 
-The one remaining difference:
+Two differences remain:
 
 - **JavaScript only**: the real plugin also works on TypeScript files (via `@typescript-eslint/parser`); the Playground's espree parser does not parse TypeScript syntax.
+- **Exposed options**: `ignorePatterns` is not available in the Playground UI (see the limitations table above).

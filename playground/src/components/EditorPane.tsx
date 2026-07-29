@@ -25,7 +25,11 @@ export default function EditorPane({ code, onChange, messages }: Props) {
       endLineNumber: m.endLine ?? m.line,
       endColumn: m.endColumn ?? m.column + 1,
       message: m.message,
-      severity: monaco.MarkerSeverity.Warning,
+      // Rules run at 'warn'; the only severity-2 message is a parse error.
+      severity:
+        m.severity === 2
+          ? monaco.MarkerSeverity.Error
+          : monaco.MarkerSeverity.Warning,
     }));
     monaco.editor.setModelMarkers(model, 'eslint', markers);
   }, [messages]);
