@@ -38,7 +38,8 @@ be disclosed responsibly.
   scope. It performs static AST analysis only: no code execution, no network
   access, no filesystem writes.
 - **Playground** (`playground/`, deployed to GitHub Pages) — a client-side demo
-  that is **not** part of the npm package. It parses code with `acorn` (parsing
-  only, never evaluation). Its `npm audit` advisories live in development-only or
-  CDN-loaded transitive dependencies; see
+  that is **not** part of the npm package. It runs the plugin's rules through
+  ESLint's browser build (`eslint/universal`) — static AST analysis only, never
+  evaluation. Its `npm audit` advisories live in development-only or CDN-loaded
+  transitive dependencies; see
   [CONTRIBUTING.md](./CONTRIBUTING.md#security--npm-audit).

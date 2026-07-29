@@ -18,6 +18,6 @@
 - [ ] `npm run build` succeeds
 - [ ] Updated `README.md` (and `README.ko.md`) if behavior or options changed
 - [ ] Added a `CHANGELOG.md` entry under `[Unreleased]`
-- [ ] If the rule changed, updated the playground mirror
-      (`playground/src/utils/linter.ts`) and parity fixtures
-      (`fixtures/date-lib-parity.ts`) to match
+- [ ] If rule behavior or messages changed, updated the shared parity fixtures
+      (`fixtures/*.ts`) to match — the playground runs the real rules, so no
+      separate sync is needed

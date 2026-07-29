@@ -1,7 +1,9 @@
-// Shared parity fixtures for the `no-new-date-with-lib` ESLint rule and its
-// playground mirror (playground/src/utils/linter.ts). Both implementations
-// must produce the exact `expected` message text for the same `code` and
-// `options`, so a change to either side without the other fails a test here.
+// Shared parity fixtures for the `no-new-date-with-lib` ESLint rule. They run
+// twice: against the rule from source (tests/rules/no-new-date-with-lib.parity.test.ts)
+// and through the playground's lint() wrapper (playground/tests/), which lints
+// with the built package via eslint/universal. Both runs must produce the
+// exact `expected` message text, locking messages in and catching a broken
+// dist build or playground wiring.
 
 export interface ParityFixtureOptions {
   libs?: string[];

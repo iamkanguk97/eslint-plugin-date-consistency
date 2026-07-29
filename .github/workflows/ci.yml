@@ -31,8 +31,13 @@ jobs:
       - name: Test
         run: npm test
 
+      # Playground steps must come after the plugin build: it depends on the
+      # plugin via file:.. and lints/bundles the built dist/.
       - name: Install playground dependencies
         run: cd playground && npm ci
 
       - name: Test playground linter
         run: cd playground && npm test
+
+      - name: Build playground
+        run: cd playground && npm run build

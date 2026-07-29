@@ -180,17 +180,18 @@ import moment from 'moment';
 | Limitation | Detail |
 |------------|--------|
 | JavaScript only | TypeScript syntax is not supported. Use plain `.js`-style code. |
-| No `require()` ordering fix | In the real plugin, `require()` after `new Date()` is a known limitation. In the Playground the two-pass AST analysis resolves this, so results may differ slightly from the real ESLint plugin for CJS patterns. |
 | No `ignorePatterns` | The `ignorePatterns` option is not exposed in the Playground UI (it requires a file path to match against). |
-| No `eslint-disable` comments | ESLint disable directives are not processed; all flagged lines will show warnings. |
 
 ---
 
 ## Difference from the Real Plugin
 
-The Playground uses a lightweight JavaScript AST parser ([acorn](https://github.com/acornjs/acorn)) to run the rule logic directly in the browser — it does not execute the actual `eslint` binary or the npm package. The rule logic is identical, but there are minor differences:
+The Playground runs the **actual plugin rules** in the browser through ESLint's
+bundler-friendly `Linter` (`eslint/universal`), parsing with espree — the same
+parser ESLint uses for JavaScript. Lint results, messages, and edge-case
+behavior (including CJS `require()` ordering and `eslint-disable` directive
+comments) match the published npm package exactly.
 
-- **Two-pass analysis**: the Playground resolves all imports before checking `new Date()`, eliminating the CJS ordering limitation present in the real plugin.
-- **JavaScript only**: the real plugin also works on TypeScript files (via `@typescript-eslint/parser`); the Playground does not.
+The one remaining difference:
 
-For exact behavior matching the published package, run ESLint locally with the plugin installed.
+- **JavaScript only**: the real plugin also works on TypeScript files (via `@typescript-eslint/parser`); the Playground's espree parser does not parse TypeScript syntax.

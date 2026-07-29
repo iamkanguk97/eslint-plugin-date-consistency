@@ -3,7 +3,9 @@ name: Deploy Playground
 on:
   push:
     branches: [main]
-    paths: ['playground/**']
+    # src/** is included because the playground bundles the plugin itself
+    # (file:.. dependency) — a rule change changes playground behavior.
+    paths: ['playground/**', 'src/**', 'fixtures/**']
   workflow_dispatch:
 
 permissions:
@@ -18,6 +20,14 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 20
+
+      # The playground depends on the plugin via file:.. — build the plugin
+      # first so its dist/ exists when the playground bundles it.
+      - name: Install plugin dependencies
+        run: npm ci
+
+      - name: Build plugin
+        run: npm run build
 
       - name: Install dependencies
         run: cd playground && npm ci
