@@ -16,11 +16,11 @@
     "eslint-plugin-date-consistency": "file:..",
     "esquery": "^1.7.0",
     "monaco-editor": "^0.56.0",
-    "react": "^19.2.0",
+    "react": "^19.3.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "typescript": "^5.5.0",
