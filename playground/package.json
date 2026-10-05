@@ -15,7 +15,7 @@
     "eslint": "^10.4.0",
     "eslint-plugin-date-consistency": "file:..",
     "esquery": "^1.7.0",
-    "monaco-editor": "^0.56.0",
+    "monaco-editor": "^0.57.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
